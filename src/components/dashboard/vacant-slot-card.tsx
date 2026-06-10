@@ -7,11 +7,13 @@ import type { VacantSlot } from "@/lib/agenda-filter-utils";
 type VacantSlotCardProps = {
   slot: VacantSlot;
   isReadOnly?: boolean;
+  onSchedule?: (slot: VacantSlot) => void;
 };
 
 export function VacantSlotCard({
   slot,
   isReadOnly = false,
+  onSchedule,
 }: VacantSlotCardProps) {
   return (
     <article className="flex w-full flex-col gap-3 rounded-xl border border-dashed border-clinical-success/40 bg-clinical-success/5 p-4 shadow-sm">
@@ -58,7 +60,12 @@ export function VacantSlotCard({
             Somente leitura
           </span>
         ) : (
-          <Button type="button" size="sm" className="h-8 gap-1.5 text-xs">
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => onSchedule?.(slot)}
+          >
             <CalendarPlus className="size-3.5" aria-hidden />
             Agendar
           </Button>

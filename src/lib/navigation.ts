@@ -1,7 +1,9 @@
 import {
   CalendarDays,
+  CalendarSearch,
   ClipboardCheck,
   FileBarChart,
+  FileText,
   ScrollText,
   Settings,
   UserCog,
@@ -9,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { canManageAgenda } from "@/lib/agenda-permissions";
 import type { UserProfile } from "@/lib/auth";
 
 export type NavItem = {
@@ -17,12 +20,21 @@ export type NavItem = {
   icon: LucideIcon;
   description?: string;
   adminOnly?: boolean;
+  requiresAgendaManagement?: boolean;
 };
 
 export function getNavItemsForProfile(profile: UserProfile): NavItem[] {
-  return mainNavItems.filter(
-    (item) => !item.adminOnly || profile === "administracao"
-  );
+  return mainNavItems.filter((item) => {
+    if (item.adminOnly && profile !== "administracao") {
+      return false;
+    }
+
+    if (item.requiresAgendaManagement && !canManageAgenda(profile)) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 export const mainNavItems: NavItem[] = [
@@ -31,6 +43,13 @@ export const mainNavItems: NavItem[] = [
     href: "/dashboard",
     icon: CalendarDays,
     description: "Agendamentos e sessões do dia",
+  },
+  {
+    title: "Busca de Agenda",
+    href: "/dashboard/busca-agenda",
+    icon: CalendarSearch,
+    description: "Profissionais disponíveis por cargo e horário",
+    requiresAgendaManagement: true,
   },
   {
     title: "Pacientes / Aprendizes",
@@ -51,6 +70,12 @@ export const mainNavItems: NavItem[] = [
     description: "Instrumentos e avaliações ABA",
   },
   {
+    title: "Evolução Clínica",
+    href: "/dashboard/evolucao",
+    icon: FileText,
+    description: "Relatórios narrativos de sessão",
+  },
+  {
     title: "Relatórios",
     href: "/dashboard/relatorios",
     icon: FileBarChart,
@@ -61,7 +86,6 @@ export const mainNavItems: NavItem[] = [
     href: "/dashboard/auditoria",
     icon: ScrollText,
     description: "Rastreabilidade de alterações na agenda",
-    adminOnly: true,
   },
   {
     title: "Configurações",

@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Eye, Plus } from "lucide-react";
 
 import { AgendaFilters } from "@/components/dashboard/agenda-filters";
 import { Badge } from "@/components/ui/badge";
 import { useAgendaAudit } from "@/hooks/use-agenda-audit";
+import { useAgendaEvents } from "@/hooks/use-agenda-events";
 import { useUserRole } from "@/hooks/use-user-role";
 import { buildDateMoveLog } from "@/lib/audit-log";
 import { moveAppointmentToDate, parseDraggedAppointmentId } from "@/lib/appointment-move-utils";
@@ -19,7 +21,6 @@ import {
   type AgendaFilters as AgendaFiltersState,
 } from "@/lib/agenda-filter-utils";
 import type { DailyAppointment } from "@/lib/dashboard-mock-data";
-import { monthlyAppointments } from "@/lib/dashboard-mock-data";
 import {
   formatMonthYear,
   getCalendarDays,
@@ -32,6 +33,13 @@ export function AgendaCalendar() {
   const { isAgendaReadOnly, canDragAppointments, canManageAgenda } =
     useUserRole();
   const { recordAuditLogs } = useAgendaAudit();
+  const {
+    appointments,
+    setAppointments,
+    isLoading,
+    addAppointment,
+    refetch,
+  } = useAgendaEvents();
   const today = new Date();
   const [dragOverDateKey, setDragOverDateKey] = useState<string | null>(null);
   const [visibleMonth, setVisibleMonth] = useState(
@@ -39,8 +47,6 @@ export function AgendaCalendar() {
   );
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [appointments, setAppointments] =
-    useState<DailyAppointment[]>(monthlyAppointments);
   const [filters, setFilters] =
     useState<AgendaFiltersState>(DEFAULT_AGENDA_FILTERS);
 
@@ -180,7 +186,11 @@ export function AgendaCalendar() {
         </div>
 
         {canManageAgenda ? (
-          <Button className="h-11 w-full shrink-0 sm:w-auto">
+          <Button
+            className="h-11 w-full shrink-0 sm:w-auto"
+            nativeButton={false}
+            render={<Link href="/dashboard/busca-agenda" />}
+          >
             <Plus className="size-4" aria-hidden />
             Novo agendamento
           </Button>
@@ -188,6 +198,10 @@ export function AgendaCalendar() {
       </section>
 
       <AgendaFilters filters={filters} onFiltersChange={setFilters} />
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando agenda...</p>
+      ) : null}
 
       <section className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
         <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:px-4">
@@ -352,6 +366,8 @@ export function AgendaCalendar() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onAppointmentsChange={setAppointments}
+        onAppointmentCreated={addAppointment}
+        onRefreshAppointments={refetch}
       />
     </div>
   );

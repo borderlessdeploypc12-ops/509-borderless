@@ -2,48 +2,44 @@
 
 import { createContext, useContext, useMemo } from "react";
 
-import type { UserProfile } from "@/lib/auth";
 import {
   canDragAppointments,
   canManageAgenda,
+  canManageClinicalEvolution,
   canViewAuditLogs,
   isAgendaReadOnly,
 } from "@/lib/agenda-permissions";
-import { currentUser } from "@/lib/mock-user";
+import type { AppUserSession } from "@/lib/user-profile";
 
-type UserRoleContextValue = {
-  profile: UserProfile;
-  displayRole: string;
+type UserRoleContextValue = AppUserSession & {
   userName: string;
   isAgendaReadOnly: boolean;
   canDragAppointments: boolean;
   canManageAgenda: boolean;
   canViewAuditLogs: boolean;
+  canManageClinicalEvolution: boolean;
 };
 
 const UserRoleContext = createContext<UserRoleContextValue | null>(null);
 
-const SIMULATED_USER = {
-  profile: "administracao" as const,
-  displayRole: "Administração",
-};
-
 type UserRoleProviderProps = {
   children: React.ReactNode;
+  session: AppUserSession;
 };
 
-export function UserRoleProvider({ children }: UserRoleProviderProps) {
+export function UserRoleProvider({ children, session }: UserRoleProviderProps) {
   const value = useMemo<UserRoleContextValue>(
     () => ({
-      profile: SIMULATED_USER.profile,
-      displayRole: SIMULATED_USER.displayRole,
-      userName: currentUser.name,
-      isAgendaReadOnly: isAgendaReadOnly(SIMULATED_USER.profile),
-      canDragAppointments: canDragAppointments(SIMULATED_USER.profile),
-      canManageAgenda: canManageAgenda(SIMULATED_USER.profile),
-      canViewAuditLogs: canViewAuditLogs(SIMULATED_USER.profile),
+      ...session,
+      userName: session.fullName,
+      isAgendaReadOnly: isAgendaReadOnly(session.profile),
+      canDragAppointments: canDragAppointments(session.profile),
+      canManageAgenda: canManageAgenda(session.profile),
+      canViewAuditLogs:
+        canViewAuditLogs(session.profile) || session.isMaster,
+      canManageClinicalEvolution: canManageClinicalEvolution(session.profile),
     }),
-    []
+    [session]
   );
 
   return (

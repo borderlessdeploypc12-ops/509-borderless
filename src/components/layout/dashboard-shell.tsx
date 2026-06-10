@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
+import { InternalCommunicationProvider } from "@/contexts/internal-communication-context";
 import { UserRoleProvider } from "@/contexts/user-role-context";
+import type { AppUserSession } from "@/lib/user-profile";
+import { PatientWaitingBanner } from "@/components/internal-communication/patient-waiting-banner";
 import { AppLogo } from "@/components/layout/app-logo";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { DashboardNav } from "@/components/layout/dashboard-nav";
@@ -20,17 +23,23 @@ import { useUserRole } from "@/hooks/use-user-role";
 
 type DashboardShellProps = {
   children: React.ReactNode;
+  session: AppUserSession;
 };
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({ children, session }: DashboardShellProps) {
   return (
-    <UserRoleProvider>
-      <DashboardShellContent>{children}</DashboardShellContent>
+    <UserRoleProvider session={session}>
+      <InternalCommunicationProvider userId={session.id}>
+        <DashboardShellContent session={session}>{children}</DashboardShellContent>
+      </InternalCommunicationProvider>
     </UserRoleProvider>
   );
 }
 
-function DashboardShellContent({ children }: DashboardShellProps) {
+function DashboardShellContent({
+  children,
+  session,
+}: DashboardShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const { profile } = useUserRole();
   const navItems = getNavItemsForProfile(profile);
@@ -55,6 +64,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
 
       <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <DashboardHeader onMenuClick={() => setIsMobileNavOpen(true)} />
+        <PatientWaitingBanner />
 
         <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           {children}

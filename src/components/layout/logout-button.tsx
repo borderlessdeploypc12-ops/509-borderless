@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,15 +18,24 @@ export function LogoutButton({
   variant = "outline",
   showIcon = true,
 }: LogoutButtonProps) {
+  const [isPending, startTransition] = useTransition();
+
+  function handleSignOut() {
+    startTransition(async () => {
+      await signOut();
+    });
+  }
+
   return (
     <Button
       type="button"
       variant={variant}
       className={cn("h-11 w-full justify-start gap-2", className)}
-      onClick={signOut}
+      onClick={handleSignOut}
+      disabled={isPending}
     >
       {showIcon ? <LogOut className="size-4" aria-hidden /> : null}
-      Sair da plataforma
+      {isPending ? "Saindo..." : "Sair da plataforma"}
     </Button>
   );
 }

@@ -47,7 +47,7 @@ export async function persistAuditLogsAction(
     return { success: true, persistedCount: 0 };
   }
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   if (!supabase) {
     return {
@@ -78,7 +78,7 @@ export async function persistAuditLogsAction(
 export async function fetchAuditLogsAction(
   filters: AuditLogFilters = {}
 ): Promise<FetchAuditLogsResult> {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   if (!supabase) {
     return {

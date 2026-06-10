@@ -1,11 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CalendarDays, Eye, Plus } from "lucide-react";
 
 import { AgendaDropZone } from "@/components/dashboard/agenda-drop-zone";
 import { AppointmentBulkStatusDialog } from "@/components/dashboard/appointment-bulk-status-dialog";
 import { AppointmentCard } from "@/components/dashboard/appointment-card";
+import {
+  NewAppointmentDialog,
+  type NewAppointmentDefaults,
+} from "@/components/dashboard/new-appointment-dialog";
 import { VacantSlotCard } from "@/components/dashboard/vacant-slot-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAgendaAudit } from "@/hooks/use-agenda-audit";
+import { useAgendaStatusSync } from "@/hooks/use-agenda-status-sync";
 import { useTouchScrollGuard } from "@/hooks/use-touch-scroll-guard";
 import { useUserRole } from "@/hooks/use-user-role";
 import {
@@ -38,6 +44,7 @@ import {
 import {
   getVacantSlotsForDate,
   type AgendaFilters,
+  type VacantSlot,
 } from "@/lib/agenda-filter-utils";
 import { formatFullDate } from "@/lib/calendar-utils";
 import type {
@@ -61,6 +68,8 @@ type DayAppointmentsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAppointmentsChange: (appointments: DailyAppointment[]) => void;
+  onAppointmentCreated?: (appointment: DailyAppointment) => void;
+  onRefreshAppointments?: () => void;
 };
 
 function getNearbyDateKeys(dateKey: string, count = 5) {
@@ -103,14 +112,20 @@ export function DayAppointmentsDialog({
   open,
   onOpenChange,
   onAppointmentsChange,
+  onAppointmentCreated,
+  onRefreshAppointments,
 }: DayAppointmentsDialogProps) {
   const { isAgendaReadOnly, canDragAppointments, canManageAgenda } =
     useUserRole();
   const { recordAuditLogs } = useAgendaAudit();
+  const { syncAppointmentStatus } = useAgendaStatusSync();
   const { onTouchStart, onTouchMove, onTouchEnd } = useTouchScrollGuard();
   const [pendingUpdate, setPendingUpdate] =
     useState<PendingStatusUpdate | null>(null);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [appointmentDefaults, setAppointmentDefaults] =
+    useState<NewAppointmentDefaults | null>(null);
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
 
   const showVacantOnly = filters.availability === "vacant";
   const vacantSlots = dateKey
@@ -153,6 +168,21 @@ export function DayAppointmentsDialog({
     void recordAuditLogs(auditLogs);
   }
 
+  function handleScheduleVacantSlot(slot: VacantSlot) {
+    if (!dateKey) {
+      return;
+    }
+
+    setAppointmentDefaults({
+      professionalName: slot.professional,
+      professionalRole: slot.role,
+      eventDate: dateKey,
+      startTime: slot.time,
+      endTime: slot.endTime,
+    });
+    setIsAppointmentDialogOpen(true);
+  }
+
   function updateStatus(
     appointmentId: string,
     newStatus: AppointmentStatus,
@@ -191,6 +221,14 @@ export function DayAppointmentsDialog({
     );
 
     applyAppointmentsChange(nextAppointments, auditLogs);
+
+    const updatedAppointments = nextAppointments.filter((appointment) =>
+      affectedIds.includes(appointment.id)
+    );
+
+    updatedAppointments.forEach((appointment) => {
+      void syncAppointmentStatus(appointment, newStatus);
+    });
   }
 
   function handleStatusChange(
@@ -382,6 +420,7 @@ export function DayAppointmentsDialog({
                       key={slot.id}
                       slot={slot}
                       isReadOnly={isAgendaReadOnly}
+                      onSchedule={handleScheduleVacantSlot}
                     />
                   ))}
                 </div>
@@ -422,7 +461,19 @@ export function DayAppointmentsDialog({
 
           {canManageAgenda ? (
             <div className="border-t border-border bg-muted/30 px-4 py-4 sm:px-6">
-              <Button className="h-11 w-full">
+              <Button
+                className="h-11 w-full"
+                nativeButton={false}
+                render={
+                  <Link
+                    href={
+                      dateKey
+                        ? `/dashboard/busca-agenda?date=${dateKey}`
+                        : "/dashboard/busca-agenda"
+                    }
+                  />
+                }
+              >
                 <Plus className="size-4" aria-hidden />
                 Novo agendamento
               </Button>
@@ -430,6 +481,16 @@ export function DayAppointmentsDialog({
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <NewAppointmentDialog
+        open={isAppointmentDialogOpen}
+        onOpenChange={setIsAppointmentDialogOpen}
+        defaults={appointmentDefaults}
+        onCreated={(appointment) => {
+          onAppointmentCreated?.(appointment);
+          onRefreshAppointments?.();
+        }}
+      />
 
       {pendingUpdate ? (
         <AppointmentBulkStatusDialog

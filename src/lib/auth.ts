@@ -23,7 +23,4 @@ export const userProfileOptions = [
 
 export type UserProfile = (typeof userProfileOptions)[number]["value"];
 
-export function signOut() {
-  // TODO: integrar com provedor de autenticação (ex.: Supabase signOut)
-  window.location.href = "/login";
-}
+export { signOutAction as signOut } from "@/app/actions/auth-actions";

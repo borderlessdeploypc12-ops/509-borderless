@@ -15,3 +15,11 @@ export function canManageAgenda(profile: UserProfile) {
 export function canViewAuditLogs(profile: UserProfile) {
   return profile === "administracao";
 }
+
+export function canManageClinicalEvolution(profile: UserProfile) {
+  return (
+    profile === "at" ||
+    profile === "supervisor" ||
+    profile === "administracao"
+  );
+}
