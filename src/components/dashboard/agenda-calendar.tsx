@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Eye, Plus } from "lucide-react";
 
@@ -13,6 +12,10 @@ import { buildDateMoveLog } from "@/lib/audit-log";
 import { moveAppointmentToDate, parseDraggedAppointmentId } from "@/lib/appointment-move-utils";
 import { AppointmentDayIcon } from "@/components/dashboard/appointment-day-icon";
 import { DayAppointmentsDialog } from "@/components/dashboard/day-appointments-dialog";
+import {
+  NewAppointmentDialog,
+  type NewAppointmentDefaults,
+} from "@/components/dashboard/new-appointment-dialog";
 import { Button } from "@/components/ui/button";
 import {
   countVacantSlotsForDate,
@@ -49,6 +52,9 @@ export function AgendaCalendar() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filters, setFilters] =
     useState<AgendaFiltersState>(DEFAULT_AGENDA_FILTERS);
+  const [appointmentDefaults, setAppointmentDefaults] =
+    useState<NewAppointmentDefaults | null>(null);
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
 
   const calendarDays = useMemo(
     () =>
@@ -187,9 +193,14 @@ export function AgendaCalendar() {
 
         {canManageAgenda ? (
           <Button
+            type="button"
             className="h-11 w-full shrink-0 sm:w-auto"
-            nativeButton={false}
-            render={<Link href="/dashboard/busca-agenda" />}
+            onClick={() => {
+              setAppointmentDefaults({
+                eventDate: selectedDateKey ?? toDateKey(today),
+              });
+              setIsAppointmentDialogOpen(true);
+            }}
           >
             <Plus className="size-4" aria-hidden />
             Novo agendamento
@@ -368,6 +379,16 @@ export function AgendaCalendar() {
         onAppointmentsChange={setAppointments}
         onAppointmentCreated={addAppointment}
         onRefreshAppointments={refetch}
+      />
+
+      <NewAppointmentDialog
+        open={isAppointmentDialogOpen}
+        onOpenChange={setIsAppointmentDialogOpen}
+        defaults={appointmentDefaults}
+        onCreated={(appointment) => {
+          addAppointment(appointment);
+          void refetch();
+        }}
       />
     </div>
   );

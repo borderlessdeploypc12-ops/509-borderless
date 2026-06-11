@@ -1,4 +1,4 @@
-export const APP_NAME = "Sem Fronteiras ABA";
+export const APP_NAME = "Nurse Care";
 
 export const APP_DESCRIPTION =
-  "Plataforma clínica de gestão de Terapia ABA para equipes multidisciplinares.";
+  "Soluções em Saúde — plataforma clínica de gestão para equipes multidisciplinares.";

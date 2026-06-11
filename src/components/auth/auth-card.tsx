@@ -35,7 +35,7 @@ export function AuthCard({
     >
       <CardHeader className="space-y-4 px-4 pt-6 text-center sm:px-6">
         <div className="flex justify-center">
-          <AppLogo />
+          <AppLogo className="justify-center" />
         </div>
         <div className="space-y-1">
           <CardTitle className="text-xl font-semibold tracking-tight">

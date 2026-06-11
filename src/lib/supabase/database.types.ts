@@ -13,7 +13,7 @@ export type Database = {
         Row: {
           id: string;
           full_name: string;
-          profile: "administracao" | "supervisor" | "at" | "recepcao";
+          profile: "ADMIN" | "SUPERVISOR" | "RECEPCAO" | "AT1" | "AT2";
           is_master: boolean;
           professional_council: string | null;
           professional_role: string | null;
@@ -23,7 +23,7 @@ export type Database = {
         Insert: {
           id: string;
           full_name: string;
-          profile: "administracao" | "supervisor" | "at" | "recepcao";
+          profile: "ADMIN" | "SUPERVISOR" | "RECEPCAO" | "AT1" | "AT2";
           is_master?: boolean;
           professional_council?: string | null;
           professional_role?: string | null;
@@ -33,7 +33,7 @@ export type Database = {
         Update: {
           id?: string;
           full_name?: string;
-          profile?: "administracao" | "supervisor" | "at" | "recepcao";
+          profile?: "ADMIN" | "SUPERVISOR" | "RECEPCAO" | "AT1" | "AT2";
           is_master?: boolean;
           professional_council?: string | null;
           professional_role?: string | null;

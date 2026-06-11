@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
+  icons: {
+    icon: "/brand/logo-icon.png",
+    apple: "/brand/logo-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -24,7 +28,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#3b82f6",
+  themeColor: "#6dbcb8",
 };
 
 export default function RootLayout({

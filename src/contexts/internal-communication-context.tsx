@@ -125,8 +125,8 @@ export function InternalCommunicationProvider({
     async (receiverId: string, content: string) => {
       const result = await sendInternalMessageAction(receiverId, content);
 
-      if (result.success && result.data) {
-        setMessages((current) => [result.data.message, ...current]);
+      if (result.success && result.data?.message) {
+        setMessages((current) => [result.data!.message, ...current]);
         return true;
       }
 

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { AvailableAgendaSearch } from "@/components/dashboard/available-agenda-search";
-import { canManageAgenda } from "@/lib/agenda-permissions";
-import { requireServerUserSession } from "@/lib/auth-server";
+import { requirePermission } from "@/lib/auth-guard";
+import { PERMISSIONS } from "@/lib/rbac";
 
 export const metadata: Metadata = {
   title: "Busca de Agenda",
@@ -12,11 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AvailableAgendaSearchPage() {
-  const session = await requireServerUserSession();
-
-  if (!canManageAgenda(session.profile)) {
-    redirect("/dashboard");
-  }
+  await requirePermission(PERMISSIONS.AGENDA_SEARCH);
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4">

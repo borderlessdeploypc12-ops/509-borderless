@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { CalendarPlus, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+  AlertTriangle,
+  CalendarPlus,
+  CalendarSearch,
+  CheckCircle2,
+  Clock3,
+  Loader2,
+  UserRound,
+} from "lucide-react";
 
 import { createAppointmentAction } from "@/app/actions/agenda-availability-actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,17 +24,38 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUserRole } from "@/hooks/use-user-role";
+import {
+  getEndTimeOptions,
+  getTimeSlotOptions,
+  getTodayDateKey,
+  resolveDefaultEndTime,
+} from "@/lib/agenda-availability";
 import { formatFullDate } from "@/lib/calendar-utils";
+import type { AppointmentConflictType } from "@/lib/agenda-conflicts";
 import type { DailyAppointment } from "@/lib/dashboard-mock-data";
-import type { ProfessionalRole } from "@/lib/professionals-data";
+import {
+  getProfessionalRole,
+  professionals,
+  type ProfessionalRole,
+} from "@/lib/professionals-data";
+import { cn } from "@/lib/utils";
 
 export type NewAppointmentDefaults = {
-  professionalName: string;
+  professionalName?: string;
   professionalUserId?: string | null;
   professionalRole?: ProfessionalRole;
-  eventDate: string;
-  startTime: string;
-  endTime: string;
+  eventDate?: string;
+  startTime?: string;
+  endTime?: string;
 };
 
 type NewAppointmentDialogProps = {
@@ -34,51 +65,147 @@ type NewAppointmentDialogProps = {
   onCreated?: (appointment: DailyAppointment) => void;
 };
 
+function isPrefilledMode(defaults?: NewAppointmentDefaults | null) {
+  return Boolean(
+    defaults?.professionalName &&
+      defaults.eventDate &&
+      defaults.startTime &&
+      defaults.endTime
+  );
+}
+
+const professionalSelectItems = professionals.map((professional) => ({
+  label: `${professional.name} · ${professional.role}`,
+  value: professional.name,
+}));
+
+function SummaryRow({
+  label,
+  value,
+  badge,
+}: {
+  label: string;
+  value: string;
+  badge?: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
+      <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
+      <div className="flex min-w-0 flex-col items-end gap-1.5">
+        <span className="text-right text-sm font-medium text-foreground">
+          {value}
+        </span>
+        {badge ? (
+          <Badge variant="secondary" className="max-w-full truncate">
+            {badge}
+          </Badge>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function NewAppointmentDialog({
   open,
   onOpenChange,
   defaults,
   onCreated,
 }: NewAppointmentDialogProps) {
+  const { canForceAppointment } = useUserRole();
+  const prefilled = isPrefilledMode(defaults);
+
   const [patientName, setPatientName] = useState("");
+  const [professionalName, setProfessionalName] = useState("");
+  const [eventDate, setEventDate] = useState(getTodayDateKey());
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
   const [error, setError] = useState<string | null>(null);
+  const [conflictType, setConflictType] =
+    useState<AppointmentConflictType | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const startTimeOptions = useMemo(() => getTimeSlotOptions(), []);
+  const endTimeOptions = useMemo(
+    () => getEndTimeOptions(startTime),
+    [startTime]
+  );
+
+  const selectedProfessionalRole =
+    defaults?.professionalRole ?? getProfessionalRole(professionalName);
+
+  const isSubmitDisabled =
+    isPending ||
+    !patientName.trim() ||
+    (!prefilled && !professionalName.trim());
+
+  const showForceAction = Boolean(conflictType && canForceAppointment);
+
   useEffect(() => {
-    if (open) {
-      setPatientName("");
-      setError(null);
-      setSuccessMessage(null);
+    if (!open) {
+      return;
     }
+
+    setPatientName("");
+    setError(null);
+    setConflictType(null);
+    setSuccessMessage(null);
+    setProfessionalName(defaults?.professionalName ?? "");
+    setEventDate(defaults?.eventDate ?? getTodayDateKey());
+    setStartTime(defaults?.startTime ?? "09:00");
+    setEndTime(
+      defaults?.endTime ?? resolveDefaultEndTime(defaults?.startTime ?? "09:00")
+    );
   }, [open, defaults]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleStartTimeChange(value: string) {
+    setStartTime(value);
+    setEndTime(resolveDefaultEndTime(value));
+  }
 
-    if (!defaults) {
+  function submitAppointment(force = false) {
+    const payload = prefilled
+      ? {
+          patientName,
+          professionalName: defaults!.professionalName!,
+          professionalUserId: defaults?.professionalUserId,
+          eventDate: defaults!.eventDate!,
+          startTime: defaults!.startTime!,
+          endTime: defaults!.endTime!,
+          force,
+        }
+      : {
+          patientName,
+          professionalName,
+          eventDate,
+          startTime,
+          endTime,
+          force,
+        };
+
+    if (!payload.professionalName.trim()) {
+      setError("Selecione o profissional.");
       return;
     }
 
     setError(null);
+    setConflictType(null);
     setSuccessMessage(null);
 
     startTransition(async () => {
-      const result = await createAppointmentAction({
-        patientName,
-        professionalName: defaults.professionalName,
-        professionalUserId: defaults.professionalUserId,
-        eventDate: defaults.eventDate,
-        startTime: defaults.startTime,
-        endTime: defaults.endTime,
-      });
+      const result = await createAppointmentAction(payload);
 
       if (!result.success) {
         setError(result.error);
+        setConflictType(result.conflictType ?? null);
         return;
       }
 
-      setSuccessMessage("Agendamento criado com sucesso.");
+      setSuccessMessage(
+        force
+          ? "Agendamento criado com conflito forçado pelo administrador."
+          : "Agendamento criado com sucesso."
+      );
 
       if (result.data?.appointment) {
         onCreated?.(result.data.appointment);
@@ -86,54 +213,43 @@ export function NewAppointmentDialog({
     });
   }
 
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    submitAppointment(false);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarPlus className="size-5" />
-            Novo agendamento
-          </DialogTitle>
-          <DialogDescription>
-            Confirme os dados e informe o paciente para concluir o agendamento.
-          </DialogDescription>
+      <DialogContent className="flex flex-col gap-0 overflow-visible p-0 sm:max-w-2xl">
+        <DialogHeader className="gap-3 border-b border-border px-6 py-4">
+          <div className="flex items-start gap-3 pr-8">
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+              <CalendarPlus className="size-5" aria-hidden />
+            </div>
+            <div className="min-w-0 space-y-1 text-left">
+              <DialogTitle className="text-lg">Novo agendamento</DialogTitle>
+              <DialogDescription>
+                {prefilled
+                  ? "Revise o horário selecionado e informe o paciente."
+                  : "Informe o paciente e escolha profissional, data e horário."}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        {defaults ? (
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid gap-3 rounded-lg border border-border/80 bg-muted/30 p-3 text-sm">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Profissional</span>
-                <span className="text-right font-medium">
-                  {defaults.professionalName}
-                </span>
-              </div>
-              {defaults.professionalRole ? (
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Cargo</span>
-                  <span className="text-right font-medium">
-                    {defaults.professionalRole}
-                  </span>
-                </div>
-              ) : null}
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Data</span>
-                <span className="text-right font-medium">
-                  {formatFullDate(defaults.eventDate)}
-                </span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Horário</span>
-                <span className="text-right font-medium">
-                  {defaults.startTime} – {defaults.endTime}
-                </span>
-              </div>
-            </div>
-
+        <form className="flex flex-col" onSubmit={handleSubmit}>
+          <div className="space-y-4 px-6 py-5">
             <div className="space-y-2">
-              <Label htmlFor="appointment-patient-name">Paciente</Label>
+              <Label
+                htmlFor="appointment-patient-name"
+                className="flex items-center gap-2 text-sm font-medium"
+              >
+                <UserRound className="size-4 text-muted-foreground" />
+                Paciente
+              </Label>
               <Input
                 id="appointment-patient-name"
+                className="h-10"
                 value={patientName}
                 onChange={(event) => setPatientName(event.target.value)}
                 placeholder="Nome do paciente ou aprendiz"
@@ -142,37 +258,262 @@ export function NewAppointmentDialog({
               />
             </div>
 
+            {prefilled ? (
+              <section className="rounded-xl border border-border/80 bg-muted/25 p-4">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Horário selecionado
+                </p>
+                <div className="divide-y divide-border/70">
+                  <SummaryRow
+                    label="Profissional"
+                    value={defaults!.professionalName!}
+                    badge={defaults?.professionalRole}
+                  />
+                  <SummaryRow
+                    label="Data"
+                    value={formatFullDate(defaults!.eventDate!)}
+                  />
+                  <SummaryRow
+                    label="Horário"
+                    value={`${defaults!.startTime} – ${defaults!.endTime}`}
+                  />
+                </div>
+              </section>
+            ) : (
+              <section className="space-y-3 rounded-xl border border-border/80 bg-muted/25 p-4">
+                <div className="flex items-center gap-2">
+                  <Clock3 className="size-4 text-primary" aria-hidden />
+                  <p className="text-sm font-medium text-foreground">
+                    Dados do atendimento
+                  </p>
+                  {selectedProfessionalRole ? (
+                    <Badge variant="outline" className="ml-auto hidden sm:inline-flex">
+                      {selectedProfessionalRole}
+                    </Badge>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="appointment-professional">Profissional</Label>
+                  <Select
+                    value={professionalName}
+                    items={professionalSelectItems}
+                    onValueChange={(value) =>
+                      setProfessionalName(value as string)
+                    }
+                  >
+                    <SelectTrigger
+                      id="appointment-professional"
+                      className="h-10 w-full bg-background"
+                    >
+                      <SelectValue placeholder="Selecione o profissional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {professionals.map((professional) => (
+                          <SelectItem
+                            key={professional.name}
+                            value={professional.name}
+                          >
+                            {professional.name} · {professional.role}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="appointment-date">Data</Label>
+                    <Input
+                      id="appointment-date"
+                      type="date"
+                      className="h-10 bg-background"
+                      value={eventDate}
+                      onChange={(event) => setEventDate(event.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="appointment-start">Início</Label>
+                    <Select
+                      value={startTime}
+                      items={startTimeOptions}
+                      onValueChange={(value) =>
+                        handleStartTimeChange(value as string)
+                      }
+                    >
+                      <SelectTrigger
+                        id="appointment-start"
+                        className="h-10 w-full bg-background"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {startTimeOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="appointment-end">Fim</Label>
+                    <Select
+                      value={endTime}
+                      items={endTimeOptions}
+                      onValueChange={(value) => setEndTime(value as string)}
+                    >
+                      <SelectTrigger
+                        id="appointment-end"
+                        className="h-10 w-full bg-background"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {endTimeOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {!prefilled ? (
+              <div className="flex items-center gap-3 rounded-lg border border-dashed border-border/80 bg-background px-4 py-2.5">
+                <CalendarSearch
+                  className="size-4 shrink-0 text-primary"
+                  aria-hidden
+                />
+                <p className="text-sm text-muted-foreground">
+                  Verificar horários livres?{" "}
+                  <Link
+                    href="/dashboard/busca-agenda"
+                    className="font-medium text-primary hover:underline"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Abrir busca de agenda
+                  </Link>
+                </p>
+              </div>
+            ) : null}
+
             {error ? (
-              <p className="text-sm text-destructive">{error}</p>
+              <div
+                className={cn(
+                  "flex items-start gap-3 rounded-lg border px-4 py-3",
+                  conflictType
+                    ? "border-amber-500/30 bg-amber-500/5"
+                    : "border-destructive/30 bg-destructive/5"
+                )}
+                role="alert"
+              >
+                <AlertTriangle
+                  className={cn(
+                    "mt-0.5 size-4 shrink-0",
+                    conflictType ? "text-amber-600" : "text-destructive"
+                  )}
+                />
+                <div className="min-w-0 space-y-0.5">
+                  <p
+                    className={cn(
+                      "text-sm font-medium",
+                      conflictType
+                        ? "text-amber-900 dark:text-amber-100"
+                        : "text-destructive"
+                    )}
+                  >
+                    {conflictType ? "Conflito de horário" : "Não foi possível agendar"}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-sm",
+                      conflictType
+                        ? "text-amber-800/90 dark:text-amber-200/90"
+                        : "text-destructive/90"
+                    )}
+                  >
+                    {error.replace(/^Conflito Detectado:\s*/i, "")}
+                    {showForceAction
+                      ? " Como administrador, você pode forçar o agendamento."
+                      : ""}
+                  </p>
+                </div>
+              </div>
             ) : null}
 
             {successMessage ? (
-              <p className="flex items-center gap-2 text-sm text-[oklch(0.42_0.1_155)]">
-                <CheckCircle2 className="size-4" />
-                {successMessage}
-              </p>
+              <div className="flex items-center gap-3 rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-4 py-3">
+                <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                  {successMessage}
+                </p>
+              </div>
             ) : null}
+          </div>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {successMessage ? "Fechar" : "Cancelar"}
-              </Button>
-              {!successMessage ? (
-                <Button type="submit" disabled={isPending || !patientName.trim()}>
-                  {isPending ? "Salvando..." : "Confirmar agendamento"}
+          <div className="flex flex-col-reverse items-stretch gap-3 border-t border-border bg-muted/30 px-6 py-5 sm:flex-row sm:items-center sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 min-w-30"
+              onClick={() => onOpenChange(false)}
+            >
+              {successMessage ? "Fechar" : "Cancelar"}
+            </Button>
+
+            {!successMessage ? (
+              <>
+                {showForceAction ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 min-w-40 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                    disabled={isSubmitDisabled}
+                    onClick={() => submitAppointment(true)}
+                  >
+                    {isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : null}
+                    Forçar agendamento
+                  </Button>
+                ) : null}
+                <Button
+                  type="submit"
+                  className="h-10 min-w-44"
+                  disabled={isSubmitDisabled}
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    "Confirmar agendamento"
+                  )}
                 </Button>
-              ) : null}
-            </div>
-          </form>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Selecione um profissional e horário disponíveis para continuar.
-          </p>
-        )}
+              </>
+            ) : null}
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

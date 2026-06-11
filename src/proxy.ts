@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
+import { canAccessRoute } from "@/lib/rbac";
 
 const protectedPrefixes = ["/dashboard"];
 
@@ -49,6 +50,24 @@ export async function proxy(request: NextRequest) {
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (isProtectedRoute && user) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("profile, is_master")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (
+      profile &&
+      !canAccessRoute(pathname, profile.profile, profile.is_master)
+    ) {
+      const deniedUrl = request.nextUrl.clone();
+      deniedUrl.pathname = "/dashboard";
+      deniedUrl.search = "acesso=negado";
+      return NextResponse.redirect(deniedUrl);
+    }
   }
 
   return supabaseResponse;

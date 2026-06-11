@@ -133,7 +133,7 @@ export function ClinicalEvolutionForm() {
       contentHtml,
       professionalName: userName,
       professionalRole: displayRole,
-      professionalCouncil,
+      professionalCouncil: professionalCouncil ?? undefined,
       status: "draft",
     });
 
@@ -178,7 +178,7 @@ export function ClinicalEvolutionForm() {
         contentHtml,
         professionalName: userName,
         professionalRole: displayRole,
-        professionalCouncil,
+        professionalCouncil: professionalCouncil ?? undefined,
       });
     } catch (error) {
       console.error("[evolucao-pdf]", error);
@@ -197,7 +197,7 @@ export function ClinicalEvolutionForm() {
       contentHtml,
       professionalName: userName,
       professionalRole: displayRole,
-      professionalCouncil,
+      professionalCouncil: professionalCouncil ?? undefined,
       status: "finalized",
     });
 

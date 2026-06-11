@@ -9,10 +9,18 @@ import {
   isUserOnline,
   type OnlineProfessional,
 } from "@/lib/internal-communication";
+import { validateAgendaAppointmentSlot } from "@/lib/agenda-conflict-server";
+import { CLINICAL_ROLES } from "@/lib/rbac";
+
+import type { AppointmentConflictType } from "@/lib/agenda-conflicts";
 
 export type ActionResult<T = undefined> =
   | { success: true; data?: T }
-  | { success: false; error: string };
+  | {
+      success: false;
+      error: string;
+      conflictType?: AppointmentConflictType;
+    };
 
 export type SyncAgendaStatusInput = {
   appointmentId: string;
@@ -31,7 +39,7 @@ async function resolveProfessionalUserId(
   const { data } = await supabase
     .from("user_profiles")
     .select("id, full_name")
-    .in("profile", ["at", "supervisor"])
+    .in("profile", [...CLINICAL_ROLES])
     .ilike("full_name", professionalName)
     .maybeSingle();
 
@@ -51,6 +59,36 @@ export async function syncAgendaStatusAction(
     supabase,
     input.professionalName
   );
+
+  if (input.status !== "cancelado") {
+    try {
+      const conflict = await validateAgendaAppointmentSlot(supabase, {
+        id: input.appointmentId,
+        patientName: input.patientName,
+        professionalName: input.professionalName,
+        professionalUserId,
+        eventDate: input.eventDate,
+        startTime: input.startTime,
+        endTime: input.endTime,
+      });
+
+      if (conflict) {
+        return {
+          success: false,
+          error: conflict.message,
+          conflictType: conflict.type,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível validar conflitos de agenda.",
+      };
+    }
+  }
 
   const payload = {
     id: input.appointmentId,
@@ -193,7 +231,7 @@ export async function listOnlineProfessionalsAction(): Promise<
   const { data: profiles, error: profilesError } = await supabase
     .from("user_profiles")
     .select("id, full_name, profile")
-    .in("profile", ["at", "supervisor"])
+    .in("profile", [...CLINICAL_ROLES])
     .order("full_name");
 
   if (profilesError) {

@@ -2,17 +2,13 @@ import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
 import type { UserProfile } from "@/lib/auth";
+import { ROLES, isRole, normalizeRole } from "@/lib/rbac";
 import { mapUserProfileRow, type AppUserSession } from "@/lib/user-profile";
 import type { UserProfileRow } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function isValidProfile(value: unknown): value is UserProfile {
-  return (
-    value === "administracao" ||
-    value === "supervisor" ||
-    value === "at" ||
-    value === "recepcao"
-  );
+  return typeof value === "string" && isRole(normalizeRole(value));
 }
 
 async function ensureUserProfile(
@@ -52,9 +48,9 @@ async function ensureUserProfile(
 
   const profile: UserProfile = hasMaster
     ? isValidProfile(metadata.profile)
-      ? metadata.profile
-      : "recepcao"
-    : "administracao";
+      ? normalizeRole(metadata.profile)
+      : ROLES.RECEPCAO
+    : ROLES.ADMIN;
 
   const { data: inserted, error: insertError } = await supabase
     .from("user_profiles")

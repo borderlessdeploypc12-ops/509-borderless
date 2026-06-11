@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { translateAuthError } from "@/lib/auth-messages";
 import type { UserProfile } from "@/lib/auth";
+import { ROLES, isRole, normalizeRole } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type AuthActionResult = {
@@ -18,12 +19,7 @@ export type BootstrapStatus = {
 };
 
 function isValidProfile(value: FormDataEntryValue | null): value is UserProfile {
-  return (
-    value === "administracao" ||
-    value === "supervisor" ||
-    value === "at" ||
-    value === "recepcao"
-  );
+  return typeof value === "string" && isRole(normalizeRole(value));
 }
 
 export async function getBootstrapStatusAction(): Promise<BootstrapStatus> {
@@ -117,18 +113,16 @@ export async function signUpAction(
   }
 
   const bootstrap = await getBootstrapStatusAction();
-  const profile = bootstrap.hasMaster
-    ? isValidProfile(profileValue)
-      ? profileValue
-      : null
-    : "administracao";
 
-  if (!profile) {
+  if (bootstrap.hasMaster) {
     return {
       success: false,
-      error: "Selecione um perfil válido.",
+      error:
+        "O cadastro público está desativado. Solicite ao administrador o cadastro em Profissionais.",
     };
   }
+
+  const profile = ROLES.ADMIN;
 
   const { data, error } = await supabase.auth.signUp({
     email,

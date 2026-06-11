@@ -47,7 +47,7 @@ function formatRelativeTime(isoDate: string) {
 }
 
 export function NotificationCenter() {
-  const { profile } = useUserRole();
+  const { canUseInternalMessaging } = useUserRole();
   const {
     notifications,
     unreadCount,
@@ -56,7 +56,7 @@ export function NotificationCenter() {
   } = useInternalCommunication();
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
 
-  const isReception = profile === "recepcao" || profile === "administracao";
+  const isReception = canUseInternalMessaging;
 
   return (
     <>

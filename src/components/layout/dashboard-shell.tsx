@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { InternalCommunicationProvider } from "@/contexts/internal-communication-context";
 import { UserRoleProvider } from "@/contexts/user-role-context";
 import type { AppUserSession } from "@/lib/user-profile";
+import { AccessDeniedBanner } from "@/components/layout/access-denied-banner";
 import { PatientWaitingBanner } from "@/components/internal-communication/patient-waiting-banner";
 import { AppLogo } from "@/components/layout/app-logo";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
@@ -41,14 +42,14 @@ function DashboardShellContent({
   session,
 }: DashboardShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const { profile } = useUserRole();
-  const navItems = getNavItemsForProfile(profile);
+  const { profile, isMaster } = useUserRole();
+  const navItems = getNavItemsForProfile(profile, isMaster);
 
   return (
     <div className="flex min-h-dvh bg-clinical-surface lg:flex-row">
       <aside className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
         <div className="flex h-16 items-center border-b border-sidebar-border px-5">
-          <AppLogo />
+          <AppLogo linkToHome variant="compact" />
         </div>
         <div className="flex-1 overflow-y-auto">
           <DashboardNav items={navItems} />
@@ -57,13 +58,16 @@ function DashboardShellContent({
         <div className="space-y-3 px-4 py-4">
           <LogoutButton />
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Gestão clínica ABA para equipes multidisciplinares.
+            Soluções em Saúde para equipes multidisciplinares.
           </p>
         </div>
       </aside>
 
       <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <DashboardHeader onMenuClick={() => setIsMobileNavOpen(true)} />
+        <Suspense fallback={null}>
+          <AccessDeniedBanner />
+        </Suspense>
         <PatientWaitingBanner />
 
         <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
@@ -78,7 +82,7 @@ function DashboardShellContent({
             <SheetDescription className="sr-only">
               Acesso às seções da clínica
             </SheetDescription>
-            <AppLogo />
+            <AppLogo linkToHome variant="compact" />
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto">

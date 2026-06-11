@@ -74,14 +74,37 @@ export function RegisterForm() {
     });
   }
 
+  if (hasMaster) {
+    return (
+      <AuthCard
+        title="Cadastro restrito"
+        description="Novos funcionários são cadastrados pelo administrador da clínica."
+        footer={
+          <p className="text-center text-sm text-muted-foreground">
+            Já possui conta?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-primary hover:underline"
+            >
+              Entrar
+            </Link>
+          </p>
+        }
+      >
+        <div className="rounded-lg border border-border/80 bg-muted/30 p-4 text-sm text-muted-foreground">
+          <p>
+            Peça ao administrador para criar seu acesso em{" "}
+            <strong>Profissionais e equipe</strong> no painel interno.
+          </p>
+        </div>
+      </AuthCard>
+    );
+  }
+
   return (
     <AuthCard
       title={isBootstrap ? "Configurar conta master" : "Criar sua conta"}
-      description={
-        isBootstrap
-          ? "Este é o primeiro acesso à plataforma. O cadastro inicial será o usuário master com permissões completas de administração."
-          : "Cadastre-se para começar a usar a plataforma. Informe seu perfil para personalizar o acesso."
-      }
+      description="Este é o primeiro acesso à plataforma. O cadastro inicial será o usuário master com permissões completas de administração."
       footer={
         <>
           <Button
@@ -91,11 +114,7 @@ export function RegisterForm() {
             size="lg"
             disabled={isPending || hasMaster === null}
           >
-            {isPending
-              ? "Criando conta..."
-              : isBootstrap
-                ? "Criar conta master"
-                : "Criar conta"}
+            {isPending ? "Criando conta..." : "Criar conta master"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             Já possui conta?{" "}

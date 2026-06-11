@@ -1,5 +1,6 @@
 import type { UserProfile } from "@/lib/auth";
 import { userProfileOptions } from "@/lib/auth";
+import { normalizeRole } from "@/lib/rbac";
 import type { UserProfileRow } from "@/lib/supabase/database.types";
 
 export type AppUserSession = {
@@ -48,13 +49,15 @@ export function mapUserProfileRow(
 ): AppUserSession {
   const fullName = profile.full_name;
 
+  const normalizedProfile = normalizeRole(profile.profile);
+
   return {
     id: authUser.id,
     email: authUser.email ?? "",
     fullName,
     initials: getInitials(fullName),
-    profile: profile.profile,
-    displayRole: getDisplayRole(profile.profile, profile.is_master),
+    profile: normalizedProfile,
+    displayRole: getDisplayRole(normalizedProfile, profile.is_master),
     isMaster: profile.is_master,
     professionalCouncil: profile.professional_council,
   };

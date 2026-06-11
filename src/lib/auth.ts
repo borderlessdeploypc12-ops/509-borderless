@@ -1,26 +1,33 @@
+import { ROLES, type Role } from "@/lib/rbac";
+
 export const userProfileOptions = [
   {
-    value: "administracao",
+    value: ROLES.ADMIN,
     label: "Administração",
     description: "Gestão geral da clínica",
   },
   {
-    value: "supervisor",
-    label: "Psicólogo supervisor",
+    value: ROLES.SUPERVISOR,
+    label: "Supervisor clínico",
     description: "Supervisão clínica e programas ABA",
   },
   {
-    value: "at",
-    label: "AT (Assistente Terapêutico)",
-    description: "Condução de sessões terapêuticas",
+    value: ROLES.AT1,
+    label: "AT 1",
+    description: "Assistente terapêutico — nível 1",
   },
   {
-    value: "recepcao",
+    value: ROLES.AT2,
+    label: "AT 2",
+    description: "Assistente terapêutico — nível 2",
+  },
+  {
+    value: ROLES.RECEPCAO,
     label: "Recepção",
     description: "Agendamento e atendimento inicial",
   },
 ] as const;
 
-export type UserProfile = (typeof userProfileOptions)[number]["value"];
+export type UserProfile = Role;
 
 export { signOutAction as signOut } from "@/app/actions/auth-actions";

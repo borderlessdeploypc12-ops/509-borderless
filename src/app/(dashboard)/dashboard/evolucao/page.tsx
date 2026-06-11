@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { FileText } from "lucide-react";
 
 import { ClinicalEvolutionForm } from "@/components/clinical-evolution/clinical-evolution-form";
+import { requirePermission } from "@/lib/auth-guard";
+import { PERMISSIONS } from "@/lib/rbac";
 
 export const metadata: Metadata = {
   title: "Evolução Clínica",
@@ -9,7 +11,9 @@ export const metadata: Metadata = {
     "Registro narrativo de evolução clínica com rascunhos e geração de relatório em PDF.",
 };
 
-export default function EvolucaoClinicaPage() {
+export default async function EvolucaoClinicaPage() {
+  await requirePermission(PERMISSIONS.CLINICAL_EVOLUTION_VIEW);
+
   return (
     <div className="space-y-6">
       <section className="space-y-1">

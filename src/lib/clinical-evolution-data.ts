@@ -7,12 +7,12 @@ export type ClinicalPatient = {
 };
 
 export const CLINIC_REPORT_HEADER = {
-  name: "Sem Fronteiras ABA",
-  legalName: "Sem Fronteiras Terapia ABA Ltda.",
+  name: "Nurse Care",
+  legalName: "Nurse Care Soluções em Saúde Ltda.",
   cnpj: "00.000.000/0001-00",
   address: "Av. Paulista, 1000 — São Paulo, SP",
   phone: "(11) 3000-0000",
-  email: "contato@semfronteirasaba.com.br",
+  email: "contato@nursecare.com.br",
 } as const;
 
 export const clinicalPatients: ClinicalPatient[] = [

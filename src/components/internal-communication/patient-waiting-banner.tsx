@@ -7,12 +7,11 @@ import { useInternalCommunication } from "@/contexts/internal-communication-cont
 import { useUserRole } from "@/hooks/use-user-role";
 
 export function PatientWaitingBanner() {
-  const { profile } = useUserRole();
+  const { isClinicalStaff } = useUserRole();
   const { waitingNotifications, markNotificationRead } =
     useInternalCommunication();
 
-  const isProfessional =
-    profile === "at" || profile === "supervisor";
+  const isProfessional = isClinicalStaff;
 
   if (!isProfessional || waitingNotifications.length === 0) {
     return null;

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CalendarDays, Eye, Plus } from "lucide-react";
 
@@ -462,17 +461,14 @@ export function DayAppointmentsDialog({
           {canManageAgenda ? (
             <div className="border-t border-border bg-muted/30 px-4 py-4 sm:px-6">
               <Button
+                type="button"
                 className="h-11 w-full"
-                nativeButton={false}
-                render={
-                  <Link
-                    href={
-                      dateKey
-                        ? `/dashboard/busca-agenda?date=${dateKey}`
-                        : "/dashboard/busca-agenda"
-                    }
-                  />
-                }
+                onClick={() => {
+                  setAppointmentDefaults({
+                    eventDate: dateKey ?? undefined,
+                  });
+                  setIsAppointmentDialogOpen(true);
+                }}
               >
                 <Plus className="size-4" aria-hidden />
                 Novo agendamento
