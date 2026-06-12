@@ -143,4 +143,8 @@
     @apply bg-background text-foreground;
     min-height: 100dvh;
   }
+
+  .page-content {
+    @apply px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8;
+  }
 }

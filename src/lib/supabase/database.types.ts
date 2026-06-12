@@ -42,6 +42,168 @@ export type Database = {
         };
         Relationships: [];
       };
+      patients: {
+        Row: {
+          id: string;
+          full_name: string;
+          birth_date: string | null;
+          guardian_name: string | null;
+          guardian_phone: string | null;
+          guardian_email: string | null;
+          diagnosis: string | null;
+          cpf: string | null;
+          notes: string | null;
+          status: "active" | "inactive" | "discharged";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name: string;
+          birth_date?: string | null;
+          guardian_name?: string | null;
+          guardian_phone?: string | null;
+          guardian_email?: string | null;
+          diagnosis?: string | null;
+          cpf?: string | null;
+          notes?: string | null;
+          status?: "active" | "inactive" | "discharged";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string;
+          birth_date?: string | null;
+          guardian_name?: string | null;
+          guardian_phone?: string | null;
+          guardian_email?: string | null;
+          diagnosis?: string | null;
+          cpf?: string | null;
+          notes?: string | null;
+          status?: "active" | "inactive" | "discharged";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      evaluations: {
+        Row: {
+          id: string;
+          patient_id: string;
+          title: string;
+          instrument: string | null;
+          evaluation_date: string;
+          content_html: string;
+          status: "draft" | "finalized";
+          professional_name: string;
+          professional_role: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          title: string;
+          instrument?: string | null;
+          evaluation_date: string;
+          content_html?: string;
+          status?: "draft" | "finalized";
+          professional_name: string;
+          professional_role: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          patient_id?: string;
+          title?: string;
+          instrument?: string | null;
+          evaluation_date?: string;
+          content_html?: string;
+          status?: "draft" | "finalized";
+          professional_name?: string;
+          professional_role?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      therapeutic_plans: {
+        Row: {
+          id: string;
+          patient_id: string;
+          title: string;
+          goals_html: string;
+          strategies_html: string;
+          start_date: string;
+          end_date: string | null;
+          status: "draft" | "active" | "completed" | "archived";
+          professional_name: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          title: string;
+          goals_html?: string;
+          strategies_html?: string;
+          start_date: string;
+          end_date?: string | null;
+          status?: "draft" | "active" | "completed" | "archived";
+          professional_name: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          patient_id?: string;
+          title?: string;
+          goals_html?: string;
+          strategies_html?: string;
+          start_date?: string;
+          end_date?: string | null;
+          status?: "draft" | "active" | "completed" | "archived";
+          professional_name?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      patient_documents: {
+        Row: {
+          id: string;
+          patient_id: string;
+          title: string;
+          document_type: string;
+          file_url: string | null;
+          notes: string | null;
+          uploaded_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          title: string;
+          document_type?: string;
+          file_url?: string | null;
+          notes?: string | null;
+          uploaded_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          patient_id?: string;
+          title?: string;
+          document_type?: string;
+          file_url?: string | null;
+          notes?: string | null;
+          uploaded_by?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       clinical_evolution_records: {
         Row: {
           id: string;
@@ -205,6 +367,7 @@ export type Database = {
         Row: {
           id: string;
           patient_name: string;
+          patient_id: string | null;
           professional_name: string;
           professional_user_id: string | null;
           event_date: string;
@@ -217,6 +380,7 @@ export type Database = {
         Insert: {
           id: string;
           patient_name: string;
+          patient_id?: string | null;
           professional_name: string;
           professional_user_id?: string | null;
           event_date: string;
@@ -229,6 +393,7 @@ export type Database = {
         Update: {
           id?: string;
           patient_name?: string;
+          patient_id?: string | null;
           professional_name?: string;
           professional_user_id?: string | null;
           event_date?: string;
@@ -249,6 +414,16 @@ export type Database = {
 };
 
 export type UserProfileRow = Database["public"]["Tables"]["user_profiles"]["Row"];
+
+export type PatientRow = Database["public"]["Tables"]["patients"]["Row"];
+
+export type EvaluationRow = Database["public"]["Tables"]["evaluations"]["Row"];
+
+export type TherapeuticPlanRow =
+  Database["public"]["Tables"]["therapeutic_plans"]["Row"];
+
+export type PatientDocumentRow =
+  Database["public"]["Tables"]["patient_documents"]["Row"];
 
 export type ClinicalEvolutionRecordRow =
   Database["public"]["Tables"]["clinical_evolution_records"]["Row"];

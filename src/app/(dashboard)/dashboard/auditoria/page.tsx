@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AuditLogGuard } from "@/components/dashboard/audit-log-guard";
+import { AuditoriaPageView } from "@/components/dashboard/auditoria-page-view";
 import { requirePermission } from "@/lib/auth-guard";
 import { PERMISSIONS } from "@/lib/rbac";
 
@@ -13,5 +13,5 @@ export const metadata: Metadata = {
 export default async function AuditoriaPage() {
   await requirePermission(PERMISSIONS.AUDIT_LOGS_VIEW);
 
-  return <AuditLogGuard />;
+  return <AuditoriaPageView />;
 }

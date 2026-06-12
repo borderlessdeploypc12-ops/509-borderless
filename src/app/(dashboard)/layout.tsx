@@ -1,3 +1,4 @@
+import { DashboardProviders } from "@/components/layout/dashboard-providers";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { requireServerUserSession } from "@/lib/auth-server";
 
@@ -8,5 +9,9 @@ export default async function DashboardLayout({
 }>) {
   const session = await requireServerUserSession();
 
-  return <DashboardShell session={session}>{children}</DashboardShell>;
+  return (
+    <DashboardProviders session={session}>
+      <DashboardShell>{children}</DashboardShell>
+    </DashboardProviders>
+  );
 }

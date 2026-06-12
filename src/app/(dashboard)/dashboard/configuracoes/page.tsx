@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { PageContainer } from "@/components/layout/page-container";
 import { requirePermission } from "@/lib/auth-guard";
 import { PERMISSIONS } from "@/lib/rbac";
 
@@ -12,11 +14,17 @@ export default async function ConfiguracoesPage() {
   await requirePermission(PERMISSIONS.SETTINGS_VIEW);
 
   return (
-    <div className="space-y-2">
-      <h1 className="text-xl font-semibold sm:text-2xl">Configurações</h1>
-      <p className="text-sm text-muted-foreground">
-        Preferências da clínica e da equipe.
-      </p>
-    </div>
+    <PageContainer>
+      <DashboardPageHeader
+        title="Configurações"
+        breadcrumbs={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Configurações" },
+        ]}
+      />
+      <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-12 text-center text-sm text-muted-foreground">
+        Preferências da clínica e da equipe em breve.
+      </div>
+    </PageContainer>
   );
 }

@@ -17,35 +17,35 @@ export const CLINIC_REPORT_HEADER = {
 
 export const clinicalPatients: ClinicalPatient[] = [
   {
-    id: "p1",
+    id: "a0000001-0000-4000-8000-000000000001",
     name: "Lucas Mendes",
     birthDate: "2018-03-14",
     guardian: "Patrícia Mendes",
     diagnosis: "TEA — Nível 2",
   },
   {
-    id: "p2",
+    id: "a0000002-0000-4000-8000-000000000002",
     name: "Sofia Ribeiro",
     birthDate: "2019-07-22",
     guardian: "Carlos Ribeiro",
     diagnosis: "TEA — Nível 1",
   },
   {
-    id: "p3",
+    id: "a0000003-0000-4000-8000-000000000003",
     name: "Miguel Torres",
     birthDate: "2017-11-05",
     guardian: "Ana Torres",
     diagnosis: "TEA — Nível 2",
   },
   {
-    id: "p4",
+    id: "a0000004-0000-4000-8000-000000000004",
     name: "Fernanda Oliveira",
     birthDate: "2016-01-30",
     guardian: "Roberto Oliveira",
     diagnosis: "TEA — Nível 3",
   },
   {
-    id: "p5",
+    id: "a0000005-0000-4000-8000-000000000005",
     name: "Gabriel Souza",
     birthDate: "2020-09-18",
     guardian: "Juliana Souza",

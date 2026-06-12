@@ -2,9 +2,6 @@
 
 import { Suspense, useState } from "react";
 
-import { InternalCommunicationProvider } from "@/contexts/internal-communication-context";
-import { UserRoleProvider } from "@/contexts/user-role-context";
-import type { AppUserSession } from "@/lib/user-profile";
 import { AccessDeniedBanner } from "@/components/layout/access-denied-banner";
 import { PatientWaitingBanner } from "@/components/internal-communication/patient-waiting-banner";
 import { AppLogo } from "@/components/layout/app-logo";
@@ -19,43 +16,25 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { getNavItemsForProfile } from "@/lib/navigation";
-import { useUserRole } from "@/hooks/use-user-role";
 
 type DashboardShellProps = {
   children: React.ReactNode;
-  session: AppUserSession;
 };
 
-export function DashboardShell({ children, session }: DashboardShellProps) {
-  return (
-    <UserRoleProvider session={session}>
-      <InternalCommunicationProvider userId={session.id}>
-        <DashboardShellContent session={session}>{children}</DashboardShellContent>
-      </InternalCommunicationProvider>
-    </UserRoleProvider>
-  );
-}
-
-function DashboardShellContent({
-  children,
-  session,
-}: DashboardShellProps) {
+export function DashboardShell({ children }: DashboardShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const { profile, isMaster } = useUserRole();
-  const navItems = getNavItemsForProfile(profile, isMaster);
 
   return (
     <div className="flex min-h-dvh bg-clinical-surface lg:flex-row">
-      <aside className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
+      <aside className="hidden w-[17.5rem] shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
         <div className="flex h-16 items-center border-b border-sidebar-border px-5">
           <AppLogo linkToHome variant="compact" />
         </div>
-        <div className="flex-1 overflow-y-auto">
-          <DashboardNav items={navItems} />
+        <div className="flex-1 overflow-y-auto py-2">
+          <DashboardNav />
         </div>
         <Separator />
-        <div className="space-y-3 px-4 py-4">
+        <div className="space-y-3 px-4 py-5">
           <LogoutButton />
           <p className="text-xs leading-relaxed text-muted-foreground">
             Soluções em Saúde para equipes multidisciplinares.
@@ -70,13 +49,16 @@ function DashboardShellContent({
         </Suspense>
         <PatientWaitingBanner />
 
-        <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
-          {children}
+        <main className="flex-1 overflow-y-auto">
+          <div className="page-content">{children}</div>
         </main>
       </div>
 
       <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
-        <SheetContent side="left" className="flex w-[min(100vw-2rem,20rem)] flex-col p-0">
+        <SheetContent
+          side="left"
+          className="flex w-[min(100vw-2rem,20rem)] flex-col p-0"
+        >
           <SheetHeader className="border-b border-border px-5 py-4 text-left">
             <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
             <SheetDescription className="sr-only">
@@ -85,14 +67,11 @@ function DashboardShellContent({
             <AppLogo linkToHome variant="compact" />
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto">
-            <DashboardNav
-              items={navItems}
-              onNavigate={() => setIsMobileNavOpen(false)}
-            />
+          <div className="flex-1 overflow-y-auto py-2">
+            <DashboardNav onNavigate={() => setIsMobileNavOpen(false)} />
           </div>
 
-          <div className="mt-auto border-t border-border px-4 py-4">
+          <div className="mt-auto border-t border-border px-4 py-5">
             <LogoutButton />
           </div>
         </SheetContent>

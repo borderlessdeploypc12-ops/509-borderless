@@ -3,9 +3,22 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
-import { canAccessRoute } from "@/lib/rbac";
+import {
+  canAccessRoute,
+  getAccessDeniedRedirectPath,
+  RECEPCAO_HOME_PATH,
+  ROLES,
+  normalizeRole,
+} from "@/lib/rbac";
 
-const protectedPrefixes = ["/dashboard"];
+const protectedPrefixes = [
+  "/dashboard",
+  "/agenda",
+  "/prontuario",
+  "/paciente",
+  "/evolucao",
+  "/configuracoes",
+];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -41,8 +54,8 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isProtectedRoute = protectedPrefixes.some((prefix) =>
-    pathname.startsWith(prefix)
+  const isProtectedRoute = protectedPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
   if (isProtectedRoute && !user) {
@@ -59,14 +72,29 @@ export async function proxy(request: NextRequest) {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (
-      profile &&
-      !canAccessRoute(pathname, profile.profile, profile.is_master)
-    ) {
-      const deniedUrl = request.nextUrl.clone();
-      deniedUrl.pathname = "/dashboard";
-      deniedUrl.search = "acesso=negado";
-      return NextResponse.redirect(deniedUrl);
+    if (profile) {
+      const normalizedProfile = normalizeRole(profile.profile);
+
+      if (
+        normalizedProfile === ROLES.RECEPCAO &&
+        pathname === "/dashboard"
+      ) {
+        const agendaUrl = request.nextUrl.clone();
+        agendaUrl.pathname = RECEPCAO_HOME_PATH;
+        agendaUrl.search = "";
+        return NextResponse.redirect(agendaUrl);
+      }
+
+      if (
+        !canAccessRoute(pathname, normalizedProfile, profile.is_master)
+      ) {
+        const deniedPath = getAccessDeniedRedirectPath(normalizedProfile);
+        const deniedUrl = request.nextUrl.clone();
+        const [redirectPath, redirectSearch] = deniedPath.split("?");
+        deniedUrl.pathname = redirectPath;
+        deniedUrl.search = redirectSearch ?? "";
+        return NextResponse.redirect(deniedUrl);
+      }
     }
   }
 

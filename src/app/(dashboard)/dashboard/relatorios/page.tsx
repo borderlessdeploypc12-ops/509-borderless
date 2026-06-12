@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { PageContainer } from "@/components/layout/page-container";
 import { requirePermission } from "@/lib/auth-guard";
 import { PERMISSIONS } from "@/lib/rbac";
 
@@ -12,11 +14,18 @@ export default async function RelatoriosPage() {
   await requirePermission(PERMISSIONS.REPORTS_VIEW);
 
   return (
-    <div className="space-y-2">
-      <h1 className="text-xl font-semibold sm:text-2xl">Relatórios</h1>
-      <p className="text-sm text-muted-foreground">
-        Indicadores de desempenho e relatórios para supervisão clínica.
-      </p>
-    </div>
+    <PageContainer>
+      <DashboardPageHeader
+        title="Indicadores Clínicos"
+        breadcrumbs={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Relatórios" },
+        ]}
+      />
+      <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-12 text-center text-sm text-muted-foreground">
+        Indicadores de desempenho e relatórios para supervisão clínica em
+        breve.
+      </div>
+    </PageContainer>
   );
 }

@@ -15,8 +15,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const { fullName, displayRole } = useUserRole();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="flex h-14 items-center gap-3 px-4 sm:h-16 sm:gap-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-card/90 backdrop-blur-md supports-[backdrop-filter]:bg-card/75">
+      <div className="flex h-14 items-center gap-3 px-4 sm:h-[4.25rem] sm:gap-4 sm:px-6 lg:px-8">
         <Button
           type="button"
           variant="ghost"

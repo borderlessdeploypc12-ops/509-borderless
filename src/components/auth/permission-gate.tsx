@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { useUserRole } from "@/hooks/use-user-role";
+import { ProtectedComponent } from "@/components/auth/protected-component";
 import type { Permission } from "@/lib/rbac";
 
 type PermissionGateProps = {
@@ -16,11 +16,9 @@ export function PermissionGate({
   children,
   fallback = null,
 }: PermissionGateProps) {
-  const { hasPermission } = useUserRole();
-
-  if (!hasPermission(permission)) {
-    return fallback;
-  }
-
-  return children;
+  return (
+    <ProtectedComponent permission={permission} fallback={fallback}>
+      {children}
+    </ProtectedComponent>
+  );
 }

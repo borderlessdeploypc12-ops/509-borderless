@@ -4,7 +4,13 @@ import { redirect } from "next/navigation";
 
 import { translateAuthError } from "@/lib/auth-messages";
 import type { UserProfile } from "@/lib/auth";
-import { ROLES, isRole, normalizeRole } from "@/lib/rbac";
+import {
+  isReceptionOnlyRole,
+  isRole,
+  normalizeRole,
+  RECEPCAO_HOME_PATH,
+  ROLES,
+} from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type AuthActionResult = {
@@ -66,7 +72,7 @@ export async function signInAction(
     };
   }
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -76,6 +82,20 @@ export async function signInAction(
       success: false,
       error: translateAuthError(error.message),
     };
+  }
+
+  const userId = data.user?.id;
+
+  if (userId) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("profile")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profile && isReceptionOnlyRole(profile.profile)) {
+      redirect(RECEPCAO_HOME_PATH);
+    }
   }
 
   redirect("/dashboard");

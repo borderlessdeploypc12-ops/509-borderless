@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermission } from "@/lib/auth-guard";
+import { PERMISSIONS } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ClinicalEvolutionRecordRow } from "@/lib/supabase/database.types";
 
@@ -35,6 +37,8 @@ export type ListDraftsResult = {
 export async function saveClinicalEvolutionAction(
   input: SaveClinicalEvolutionInput
 ): Promise<SaveClinicalEvolutionResult> {
+  await requirePermission(PERMISSIONS.CLINICAL_EVOLUTION_MANAGE);
+
   const supabase = await createServerSupabaseClient();
 
   if (!supabase) {

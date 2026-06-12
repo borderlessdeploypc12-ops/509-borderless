@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, ScrollText } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+
+import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 
 import {
   fetchAuditLogsAction,
@@ -40,18 +42,18 @@ export function AuditLogPage() {
 
   return (
     <div className="space-y-6">
-      <section className="space-y-1">
-        <div className="flex items-center gap-2">
-          <ScrollText className="size-6 text-primary" aria-hidden />
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-            Log de Auditoria
-          </h1>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Consulte o histórico de remanejamentos, cancelamentos e mudanças de
-          situação registrados automaticamente na agenda.
-        </p>
-      </section>
+      <DashboardPageHeader
+        title="Log de Auditoria"
+        breadcrumbs={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Auditoria" },
+        ]}
+      />
+
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Consulte o histórico de remanejamentos, cancelamentos e mudanças de
+        situação registrados automaticamente na agenda.
+      </p>
 
       <AuditLogFiltersBar
         filters={filters}

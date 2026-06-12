@@ -14,6 +14,7 @@ import {
   listClinicalEvolutionDraftsAction,
   saveClinicalEvolutionAction,
 } from "@/app/actions/clinical-evolution-actions";
+import { ProtectedComponent } from "@/components/auth/protected-component";
 import { RichTextEditor } from "@/components/clinical-evolution/rich-text-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUserRole } from "@/hooks/use-user-role";
+import { PERMISSIONS } from "@/lib/rbac";
 import {
   clinicalPatients,
   getClinicalPatient,
@@ -52,12 +54,12 @@ function formatUpdatedAt(value: string) {
 }
 
 export function ClinicalEvolutionForm() {
-  const {
-    userName,
-    displayRole,
-    professionalCouncil,
-    canManageClinicalEvolution,
-  } = useUserRole();
+  const { userName, displayRole, professionalCouncil, hasPermission } =
+    useUserRole();
+
+  const canManageClinicalEvolution = hasPermission(
+    PERMISSIONS.CLINICAL_EVOLUTION_MANAGE
+  );
 
   const [patientId, setPatientId] = useState(clinicalPatients[0]?.id ?? "");
   const [sessionDate, setSessionDate] = useState(toDateKey(new Date()));
@@ -225,15 +227,6 @@ export function ClinicalEvolutionForm() {
     setLastSavedAt(draft.updated_at);
   }
 
-  if (!canManageClinicalEvolution) {
-    return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-        O módulo de Evolução Clínica está disponível para terapeutas e
-        supervisores.
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <section className="grid gap-4 rounded-xl border border-border/80 bg-card p-4 shadow-sm lg:grid-cols-3">
@@ -343,7 +336,11 @@ export function ClinicalEvolutionForm() {
             Carregando rascunho...
           </div>
         ) : (
-          <RichTextEditor value={contentHtml} onChange={setContentHtml} />
+          <RichTextEditor
+            value={contentHtml}
+            onChange={setContentHtml}
+            disabled={!canManageClinicalEvolution}
+          />
         )}
       </section>
 
@@ -364,36 +361,38 @@ export function ClinicalEvolutionForm() {
         </div>
       ) : null}
 
-      <section className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11 gap-2"
-          onClick={() => void handleSaveDraft()}
-          disabled={isSaving || isLoadingDraft || !selectedPatient}
-        >
-          {isSaving ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <Save className="size-4" aria-hidden />
-          )}
-          Salvar rascunho
-        </Button>
+      <ProtectedComponent permission={PERMISSIONS.CLINICAL_EVOLUTION_MANAGE}>
+        <section className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 gap-2"
+            onClick={() => void handleSaveDraft()}
+            disabled={isSaving || isLoadingDraft || !selectedPatient}
+          >
+            {isSaving ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Save className="size-4" aria-hidden />
+            )}
+            Salvar rascunho
+          </Button>
 
-        <Button
-          type="button"
-          className="h-11 gap-2"
-          onClick={() => void handleGeneratePdf()}
-          disabled={isGeneratingPdf || isLoadingDraft || !selectedPatient}
-        >
-          {isGeneratingPdf ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <FileDown className="size-4" aria-hidden />
-          )}
-          Gerar PDF do relatório
-        </Button>
-      </section>
+          <Button
+            type="button"
+            className="h-11 gap-2"
+            onClick={() => void handleGeneratePdf()}
+            disabled={isGeneratingPdf || isLoadingDraft || !selectedPatient}
+          >
+            {isGeneratingPdf ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <FileDown className="size-4" aria-hidden />
+            )}
+            Gerar PDF do relatório
+          </Button>
+        </section>
+      </ProtectedComponent>
     </div>
   );
 }

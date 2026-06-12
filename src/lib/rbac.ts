@@ -11,6 +11,7 @@ export const ROLES = {
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export const PERMISSIONS = {
+  DASHBOARD_VIEW: "dashboard:view",
   AGENDA_VIEW: "agenda:view",
   AGENDA_MANAGE: "agenda:manage",
   AGENDA_SEARCH: "agenda:search",
@@ -38,24 +39,24 @@ const LEGACY_ROLE_MAP: Record<string, Role> = {
 };
 
 const BASE_THERAPIST_PERMISSIONS = [
+  PERMISSIONS.DASHBOARD_VIEW,
   PERMISSIONS.AGENDA_VIEW,
   PERMISSIONS.PATIENTS_VIEW,
   PERMISSIONS.ASSESSMENTS_VIEW,
   PERMISSIONS.CLINICAL_EVOLUTION_VIEW,
+] as const satisfies readonly Permission[];
+
+const CLINICAL_EVOLUTION_EDITOR_PERMISSIONS = [
   PERMISSIONS.CLINICAL_EVOLUTION_MANAGE,
 ] as const satisfies readonly Permission[];
 
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
-  [ROLES.RECEPCAO]: [
-    PERMISSIONS.AGENDA_VIEW,
-    PERMISSIONS.AGENDA_MANAGE,
-    PERMISSIONS.AGENDA_SEARCH,
-    PERMISSIONS.INTERNAL_MESSAGING,
-  ],
+  [ROLES.RECEPCAO]: [PERMISSIONS.AGENDA_VIEW, PERMISSIONS.AGENDA_MANAGE],
   [ROLES.AT2]: [...BASE_THERAPIST_PERMISSIONS],
   [ROLES.AT1]: [...BASE_THERAPIST_PERMISSIONS, PERMISSIONS.REPORTS_VIEW],
   [ROLES.SUPERVISOR]: [
     ...BASE_THERAPIST_PERMISSIONS,
+    ...CLINICAL_EVOLUTION_EDITOR_PERMISSIONS,
     PERMISSIONS.AGENDA_MANAGE,
     PERMISSIONS.AGENDA_SEARCH,
     PERMISSIONS.PROFESSIONALS_VIEW,
@@ -74,17 +75,39 @@ export const PROFESSIONAL_ROLES = [
   ROLES.ADMIN,
 ] as const;
 
+export const RECEPCAO_HOME_PATH = "/agenda";
+
+export const RECEPCAO_ALLOWED_PATHS = [RECEPCAO_HOME_PATH] as const;
+
 export const ROUTE_PERMISSIONS: Record<string, Permission> = {
-  "/dashboard": PERMISSIONS.AGENDA_VIEW,
+  "/agenda": PERMISSIONS.AGENDA_VIEW,
+  "/dashboard": PERMISSIONS.DASHBOARD_VIEW,
   "/dashboard/busca-agenda": PERMISSIONS.AGENDA_SEARCH,
+  "/prontuario": PERMISSIONS.PATIENTS_VIEW,
+  "/paciente": PERMISSIONS.PATIENTS_VIEW,
   "/dashboard/pacientes": PERMISSIONS.PATIENTS_VIEW,
   "/dashboard/profissionais": PERMISSIONS.PROFESSIONALS_VIEW,
   "/dashboard/avaliacoes": PERMISSIONS.ASSESSMENTS_VIEW,
+  "/evolucao": PERMISSIONS.CLINICAL_EVOLUTION_VIEW,
   "/dashboard/evolucao": PERMISSIONS.CLINICAL_EVOLUTION_VIEW,
   "/dashboard/relatorios": PERMISSIONS.REPORTS_VIEW,
   "/dashboard/auditoria": PERMISSIONS.AUDIT_LOGS_VIEW,
+  "/configuracoes": PERMISSIONS.SETTINGS_VIEW,
   "/dashboard/configuracoes": PERMISSIONS.SETTINGS_VIEW,
 };
+
+export const CLINICAL_EVOLUTION_EDITOR_ROLES = [
+  ROLES.ADMIN,
+  ROLES.SUPERVISOR,
+] as const satisfies readonly Role[];
+
+function normalizePathname(pathname: string) {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+
+  return pathname;
+}
 
 export function isRole(value: string): value is Role {
   return Object.values(ROLES).includes(value as Role);
@@ -122,11 +145,20 @@ export function getPermissionsForRole(
   return ROLE_PERMISSIONS[normalizeRole(profile)];
 }
 
+export function isReceptionAllowedPath(pathname: string) {
+  const normalizedPath = normalizePathname(pathname);
+
+  return (RECEPCAO_ALLOWED_PATHS as readonly string[]).includes(normalizedPath);
+}
+
+export function getAccessDeniedRedirectPath(profile: UserProfile | string) {
+  return isReceptionOnlyRole(profile)
+    ? `${RECEPCAO_HOME_PATH}?acesso=negado`
+    : "/dashboard?acesso=negado";
+}
+
 export function getRoutePermission(pathname: string): Permission | null {
-  const normalizedPath =
-    pathname.length > 1 && pathname.endsWith("/")
-      ? pathname.slice(0, -1)
-      : pathname;
+  const normalizedPath = normalizePathname(pathname);
 
   const matchedRoute = Object.keys(ROUTE_PERMISSIONS)
     .sort((left, right) => right.length - left.length)
@@ -143,13 +175,35 @@ export function canAccessRoute(
   profile: UserProfile | string,
   isMaster = false
 ) {
-  const permission = getRoutePermission(pathname);
-
-  if (!permission) {
+  if (isMaster) {
     return true;
   }
 
+  const role = normalizeRole(profile);
+
+  if (role === ROLES.RECEPCAO && !isReceptionAllowedPath(pathname)) {
+    return false;
+  }
+
+  const permission = getRoutePermission(pathname);
+
+  if (!permission) {
+    return role !== ROLES.RECEPCAO || isReceptionAllowedPath(pathname);
+  }
+
   return hasPermission(profile, permission, isMaster);
+}
+
+export function canEditClinicalEvolutionRecords(
+  profile: UserProfile | string,
+  isMaster = false
+) {
+  if (isMaster) {
+    return true;
+  }
+
+  const role = normalizeRole(profile);
+  return (CLINICAL_EVOLUTION_EDITOR_ROLES as readonly Role[]).includes(role);
 }
 
 export function isReceptionOnlyRole(profile: UserProfile | string) {

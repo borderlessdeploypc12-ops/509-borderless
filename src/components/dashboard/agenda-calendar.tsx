@@ -167,13 +167,10 @@ export function AgendaCalendar() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
+    <div className="space-y-5">
+      <section className="flex flex-col gap-4 rounded-xl border border-border/70 bg-card/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Agenda
-            </h1>
             {isAgendaReadOnly ? (
               <Badge
                 variant="outline"
@@ -184,10 +181,10 @@ export function AgendaCalendar() {
               </Badge>
             ) : null}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             {isAgendaReadOnly
               ? "Visualize os atendimentos do dia. Seu perfil não permite alterações na agenda."
-              : "Toque em um dia para ver os atendimentos agendados."}
+              : "Toque em um dia para ver os atendimentos agendados ou arraste sessões entre datas."}
           </p>
         </div>
 
