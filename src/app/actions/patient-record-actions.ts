@@ -79,8 +79,7 @@ export async function getPatientAction(
   return { success: true, data: { patient: data } };
 }
 
-export type UpdatePatientInput = {
-  patientId: string;
+export type PatientFormInput = {
   fullName: string;
   cpf?: string;
   guardianName?: string;
@@ -91,10 +90,85 @@ export type UpdatePatientInput = {
   notes?: string;
 };
 
+export type UpdatePatientInput = PatientFormInput & {
+  patientId: string;
+};
+
 function normalizeOptionalText(value: string | undefined) {
   const normalized = value?.trim();
 
   return normalized ? normalized : null;
+}
+
+function validatePatientFormInput(input: PatientFormInput) {
+  const fullName = input.fullName.trim();
+
+  if (!fullName) {
+    return { error: "Informe o nome do aprendiz." as const };
+  }
+
+  const guardianEmail = normalizeOptionalText(input.guardianEmail);
+
+  if (guardianEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail)) {
+    return { error: "Informe um e-mail válido." as const };
+  }
+
+  return {
+    fullName,
+    cpf: normalizeOptionalText(input.cpf),
+    guardianName: normalizeOptionalText(input.guardianName),
+    guardianPhone: normalizeOptionalText(input.guardianPhone),
+    guardianEmail,
+    diagnosis: normalizeOptionalText(input.diagnosis),
+    birthDate: normalizeOptionalText(input.birthDate),
+    notes: normalizeOptionalText(input.notes),
+  };
+}
+
+export async function createPatientAction(
+  input: PatientFormInput
+): Promise<ActionResult<{ patient: PatientRow }>> {
+  await requirePermission(PERMISSIONS.PATIENTS_VIEW);
+
+  const validated = validatePatientFormInput(input);
+
+  if ("error" in validated) {
+    return { success: false, error: validated.error };
+  }
+
+  const supabase = await createServerSupabaseClient();
+
+  if (!supabase) {
+    return { success: false, error: "Supabase não configurado." };
+  }
+
+  const { data, error } = await supabase
+    .from("patients")
+    .insert({
+      full_name: validated.fullName,
+      cpf: validated.cpf,
+      guardian_name: validated.guardianName,
+      guardian_phone: validated.guardianPhone,
+      guardian_email: validated.guardianEmail,
+      diagnosis: validated.diagnosis,
+      birth_date: validated.birthDate,
+      notes: validated.notes,
+      status: "active",
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return {
+      success: false,
+      error:
+        error.code === "42501"
+          ? "Sem permissão para cadastrar aprendizes."
+          : error.message,
+    };
+  }
+
+  return { success: true, data: { patient: data } };
 }
 
 export async function updatePatientAction(
@@ -102,16 +176,10 @@ export async function updatePatientAction(
 ): Promise<ActionResult<{ patient: PatientRow }>> {
   await requirePermission(PERMISSIONS.PATIENTS_VIEW);
 
-  const fullName = input.fullName.trim();
+  const validated = validatePatientFormInput(input);
 
-  if (!fullName) {
-    return { success: false, error: "Informe o nome do aprendiz." };
-  }
-
-  const guardianEmail = normalizeOptionalText(input.guardianEmail);
-
-  if (guardianEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail)) {
-    return { success: false, error: "Informe um e-mail válido." };
+  if ("error" in validated) {
+    return { success: false, error: validated.error };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -123,14 +191,14 @@ export async function updatePatientAction(
   const { data, error } = await supabase
     .from("patients")
     .update({
-      full_name: fullName,
-      cpf: normalizeOptionalText(input.cpf),
-      guardian_name: normalizeOptionalText(input.guardianName),
-      guardian_phone: normalizeOptionalText(input.guardianPhone),
-      guardian_email: guardianEmail,
-      diagnosis: normalizeOptionalText(input.diagnosis),
-      birth_date: normalizeOptionalText(input.birthDate),
-      notes: normalizeOptionalText(input.notes),
+      full_name: validated.fullName,
+      cpf: validated.cpf,
+      guardian_name: validated.guardianName,
+      guardian_phone: validated.guardianPhone,
+      guardian_email: validated.guardianEmail,
+      diagnosis: validated.diagnosis,
+      birth_date: validated.birthDate,
+      notes: validated.notes,
       updated_at: new Date().toISOString(),
     })
     .eq("id", input.patientId)

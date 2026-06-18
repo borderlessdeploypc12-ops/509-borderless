@@ -23,7 +23,10 @@ export function useAgendaStatusSync() {
 
       if (!result.success) {
         console.error("[agenda-sync]", result.error);
+        return null;
       }
+
+      return result.data?.appointment ?? null;
     },
     []
   );

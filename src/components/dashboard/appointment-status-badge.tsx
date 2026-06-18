@@ -20,6 +20,11 @@ const statusConfig: Record<
     className:
       "border-clinical-warning/30 bg-clinical-warning/20 font-semibold text-[oklch(0.45_0.12_75)]",
   },
+  chamado: {
+    label: "Chamado",
+    className:
+      "border-primary/30 bg-primary/15 font-semibold text-primary",
+  },
   cancelado: {
     label: "Cancelado",
     className:

@@ -1,5 +1,7 @@
 "use server";
 
+import { mapAgendaEventToDailyAppointment } from "@/lib/agenda-events";
+import type { DailyAppointment } from "@/lib/dashboard-mock-data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   InternalMessageRow,
@@ -10,6 +12,7 @@ import {
   type OnlineProfessional,
 } from "@/lib/internal-communication";
 import { validateAgendaAppointmentSlot } from "@/lib/agenda-conflict-server";
+import { resolveQueueNumberForAppointment } from "@/lib/reception-panel-queue";
 import { CLINICAL_ROLES } from "@/lib/rbac";
 
 import type { AppointmentConflictType } from "@/lib/agenda-conflicts";
@@ -29,7 +32,7 @@ export type SyncAgendaStatusInput = {
   eventDate: string;
   startTime: string;
   endTime: string;
-  status: "confirmado" | "agendado" | "em_espera" | "cancelado";
+  status: "confirmado" | "agendado" | "em_espera" | "chamado" | "cancelado";
 };
 
 async function resolveProfessionalUserId(
@@ -48,7 +51,7 @@ async function resolveProfessionalUserId(
 
 export async function syncAgendaStatusAction(
   input: SyncAgendaStatusInput
-): Promise<ActionResult> {
+): Promise<ActionResult<{ appointment?: DailyAppointment }>> {
   const supabase = await createServerSupabaseClient();
 
   if (!supabase) {
@@ -102,15 +105,42 @@ export async function syncAgendaStatusAction(
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase.from("agenda_events").upsert(payload, {
-    onConflict: "id",
-  });
+  if (input.status === "em_espera") {
+    try {
+      const queueNumber = await resolveQueueNumberForAppointment(
+        supabase,
+        input.eventDate,
+        input.appointmentId
+      );
+
+      Object.assign(payload, { queue_number: queueNumber });
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível gerar a senha.",
+      };
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("agenda_events")
+    .upsert(payload, {
+      onConflict: "id",
+    })
+    .select()
+    .single();
 
   if (error) {
     return { success: false, error: error.message };
   }
 
-  return { success: true, data: undefined };
+  return {
+    success: true,
+    data: { appointment: mapAgendaEventToDailyAppointment(data) },
+  };
 }
 
 export async function sendInternalMessageAction(

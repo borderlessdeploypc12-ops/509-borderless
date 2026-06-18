@@ -17,6 +17,9 @@ export function mapAgendaEventToDailyAppointment(
     paymentLinkUrl: event.payment_link_url,
     professionalUserId: event.professional_user_id,
     patientId: event.patient_id,
+    queueNumber: event.queue_number,
+    roomName: event.room_name,
+    calledAt: event.called_at,
   };
 }
 

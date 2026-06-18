@@ -12,6 +12,7 @@ import {
   type NewAppointmentDefaults,
 } from "@/components/dashboard/new-appointment-dialog";
 import { VacantSlotCard } from "@/components/dashboard/vacant-slot-card";
+import { CallPatientDialog } from "@/components/reception/call-patient-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,6 +131,9 @@ export function DayAppointmentsDialog({
   const [detailAppointment, setDetailAppointment] =
     useState<DailyAppointment | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [callAppointment, setCallAppointment] =
+    useState<DailyAppointment | null>(null);
+  const [isCallDialogOpen, setIsCallDialogOpen] = useState(false);
 
   const canViewFinancialDetails = hasPermission(PERMISSIONS.FINANCE_MANAGE);
 
@@ -233,7 +237,17 @@ export function DayAppointmentsDialog({
     );
 
     updatedAppointments.forEach((appointment) => {
-      void syncAppointmentStatus(appointment, newStatus);
+      void syncAppointmentStatus(appointment, newStatus).then((synced) => {
+        if (!synced) {
+          return;
+        }
+
+        onAppointmentsChange(
+          nextAppointments.map((item) =>
+            item.id === synced.id ? synced : item
+          )
+        );
+      });
     });
   }
 
@@ -347,6 +361,19 @@ export function DayAppointmentsDialog({
   function handleViewAppointmentDetails(appointment: DailyAppointment) {
     setDetailAppointment(appointment);
     setIsDetailDialogOpen(true);
+  }
+
+  function handleOpenCallDialog(appointment: DailyAppointment) {
+    setCallAppointment(appointment);
+    setIsCallDialogOpen(true);
+  }
+
+  function handlePatientCalled(calledAppointment: DailyAppointment) {
+    const nextAppointments = allAppointments.map((appointment) =>
+      appointment.id === calledAppointment.id ? calledAppointment : appointment
+    );
+
+    applyAppointmentsChange(nextAppointments, []);
   }
 
   function handleBulkDialogOpenChange(nextOpen: boolean) {
@@ -465,6 +492,8 @@ export function DayAppointmentsDialog({
                     canViewDetails={canViewFinancialDetails}
                     onViewDetails={handleViewAppointmentDetails}
                     onStatusChange={handleStatusChange}
+                    canCallPatient={canManageAgenda}
+                    onCallPatient={handleOpenCallDialog}
                   />
                 ))}
               </div>
@@ -515,6 +544,13 @@ export function DayAppointmentsDialog({
           onAppointmentCreated?.(appointment);
           onRefreshAppointments?.();
         }}
+      />
+
+      <CallPatientDialog
+        appointment={callAppointment}
+        open={isCallDialogOpen}
+        onOpenChange={setIsCallDialogOpen}
+        onPatientCalled={handlePatientCalled}
       />
 
       {pendingUpdate ? (

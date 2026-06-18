@@ -37,7 +37,7 @@ export type CreateAppointmentInput = {
 
 export type UpdateAppointmentInput = CreateAppointmentInput & {
   appointmentId: string;
-  status?: "confirmado" | "agendado" | "em_espera" | "cancelado";
+  status?: "confirmado" | "agendado" | "em_espera" | "chamado" | "cancelado";
 };
 
 export async function searchAvailableProfessionalsAction(

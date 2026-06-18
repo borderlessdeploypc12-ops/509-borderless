@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Download,
@@ -186,7 +187,11 @@ export function PatientList({ patients }: PatientListProps) {
       <PatientStatsRow patients={patientItems} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button size="lg" disabled title="Cadastro de aprendiz em breve">
+        <Button
+          size="lg"
+          nativeButton={false}
+          render={<Link href="/dashboard/pacientes/novo" />}
+        >
           <Plus className="size-4" aria-hidden />
           Novo Aprendiz
         </Button>

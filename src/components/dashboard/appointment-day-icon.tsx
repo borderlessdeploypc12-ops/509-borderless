@@ -2,6 +2,7 @@ import {
   CalendarClock,
   CircleCheck,
   CircleX,
+  Megaphone,
   Hourglass,
   type LucideIcon,
 } from "lucide-react";
@@ -27,6 +28,11 @@ const statusIconConfig: Record<
     icon: Hourglass,
     className: "text-[oklch(0.48_0.12_75)]",
     label: "Em espera",
+  },
+  chamado: {
+    icon: Megaphone,
+    className: "text-primary",
+    label: "Chamado",
   },
   cancelado: {
     icon: CircleX,

@@ -7,6 +7,7 @@ import {
   Eye,
   GripVertical,
   Lock,
+  Megaphone,
   RefreshCw,
   UserRound,
 } from "lucide-react";
@@ -24,6 +25,7 @@ import {
 import { useTouchScrollGuard } from "@/hooks/use-touch-scroll-guard";
 import { setDraggedAppointmentId } from "@/lib/appointment-move-utils";
 import { cn } from "@/lib/utils";
+import { formatQueueNumber } from "@/lib/reception-panel";
 import type {
   AppointmentStatus,
   DailyAppointment,
@@ -45,7 +47,9 @@ type AppointmentCardProps = {
   isReadOnly?: boolean;
   canDrag?: boolean;
   canViewDetails?: boolean;
+  canCallPatient?: boolean;
   onViewDetails?: (appointment: DailyAppointment) => void;
+  onCallPatient?: (appointment: DailyAppointment) => void;
   onStatusChange: (
     appointmentId: string,
     status: AppointmentStatus
@@ -57,7 +61,9 @@ export function AppointmentCard({
   isReadOnly = false,
   canDrag = false,
   canViewDetails = false,
+  canCallPatient = false,
   onViewDetails,
+  onCallPatient,
   onStatusChange,
 }: AppointmentCardProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -65,6 +71,7 @@ export function AppointmentCard({
     useTouchScrollGuard();
 
   const isWaiting = appointment.status === "em_espera";
+  const isCalled = appointment.status === "chamado";
   const isCancelled = appointment.status === "cancelado";
   const isDraggable = canDrag && !isReadOnly && !isCancelled;
 
@@ -102,6 +109,8 @@ export function AppointmentCard({
         "app-surface-card flex w-full min-h-[5.5rem] flex-col gap-3 p-4 transition-all",
         isWaiting
           ? "border-clinical-warning/50 bg-clinical-warning/10 ring-1 ring-clinical-warning/25"
+          : isCalled
+            ? "border-primary/40 bg-primary/10 ring-1 ring-primary/20"
           : isCancelled
             ? "border-destructive/20 bg-destructive/5 opacity-80"
             : "border-border/80",
@@ -129,6 +138,8 @@ export function AppointmentCard({
               "flex shrink-0 flex-col items-center justify-center rounded-lg px-2.5 py-2 text-center",
               isWaiting
                 ? "bg-clinical-warning/25"
+                : isCalled
+                  ? "bg-primary/20"
                 : isCancelled
                   ? "bg-destructive/10"
                   : "bg-primary/10"
@@ -139,6 +150,8 @@ export function AppointmentCard({
                 "text-sm font-bold leading-none",
                 isWaiting
                   ? "text-[oklch(0.42_0.12_75)]"
+                  : isCalled
+                    ? "text-primary"
                   : isCancelled
                     ? "text-destructive"
                     : "text-primary"
@@ -164,6 +177,12 @@ export function AppointmentCard({
               <UserRound className="size-3.5 shrink-0" aria-hidden />
               {appointment.professional}
             </p>
+            {appointment.queueNumber ? (
+              <p className="text-xs font-semibold text-primary">
+                Senha {formatQueueNumber(appointment.queueNumber)}
+                {appointment.roomName ? ` · ${appointment.roomName}` : ""}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -191,6 +210,18 @@ export function AppointmentCard({
             >
               <Eye className="size-3.5" aria-hidden />
               Detalhes
+            </Button>
+          ) : null}
+
+          {canCallPatient && isWaiting && onCallPatient ? (
+            <Button
+              type="button"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => onCallPatient(appointment)}
+            >
+              <Megaphone className="size-3.5" aria-hidden />
+              Chamar
             </Button>
           ) : null}
 

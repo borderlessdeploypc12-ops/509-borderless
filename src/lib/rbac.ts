@@ -87,6 +87,7 @@ export const RECEPCAO_ALLOWED_PATHS = [RECEPCAO_HOME_PATH] as const;
 
 export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/agenda": PERMISSIONS.AGENDA_VIEW,
+  "/painel-chamada": PERMISSIONS.AGENDA_VIEW,
   "/dashboard": PERMISSIONS.DASHBOARD_VIEW,
   "/dashboard/busca-agenda": PERMISSIONS.AGENDA_SEARCH,
   "/prontuario": PERMISSIONS.PATIENTS_VIEW,
