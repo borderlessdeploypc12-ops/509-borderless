@@ -34,17 +34,16 @@ import {
 import { useUserRole } from "@/hooks/use-user-role";
 import { PERMISSIONS } from "@/lib/rbac";
 import {
-  clinicalPatients,
   getClinicalPatient,
+  type ClinicalPatient,
 } from "@/lib/clinical-evolution-data";
 import { generateClinicalEvolutionPdf } from "@/lib/clinical-evolution-pdf";
 import { toDateKey } from "@/lib/calendar-utils";
 import type { ClinicalEvolutionRecordRow } from "@/lib/supabase/database.types";
 
-const patientSelectItems = clinicalPatients.map((patient) => ({
-  label: patient.name,
-  value: patient.id,
-}));
+type ClinicalEvolutionFormProps = {
+  patients: ClinicalPatient[];
+};
 
 function formatUpdatedAt(value: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -56,7 +55,7 @@ function formatUpdatedAt(value: string) {
   }).format(new Date(value));
 }
 
-export function ClinicalEvolutionForm() {
+export function ClinicalEvolutionForm({ patients }: ClinicalEvolutionFormProps) {
   const { userName, displayRole, professionalCouncil, hasPermission } =
     useUserRole();
 
@@ -64,7 +63,13 @@ export function ClinicalEvolutionForm() {
     PERMISSIONS.CLINICAL_EVOLUTION_MANAGE
   );
 
-  const [patientId, setPatientId] = useState(clinicalPatients[0]?.id ?? "");
+  const activePatients = patients.filter((patient) => patient.id);
+  const patientSelectItems = activePatients.map((patient) => ({
+    label: patient.name,
+    value: patient.id,
+  }));
+
+  const [patientId, setPatientId] = useState(activePatients[0]?.id ?? "");
   const [sessionDate, setSessionDate] = useState(toDateKey(new Date()));
   const [contentHtml, setContentHtml] = useState("");
   const [drafts, setDrafts] = useState<ClinicalEvolutionRecordRow[]>([]);
@@ -77,7 +82,7 @@ export function ClinicalEvolutionForm() {
   } | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
-  const selectedPatient = getClinicalPatient(patientId);
+  const selectedPatient = getClinicalPatient(activePatients, patientId);
 
   const templateVariables = buildDocumentTemplateVariables({
     patientName: selectedPatient?.name,
@@ -245,24 +250,30 @@ export function ClinicalEvolutionForm() {
       <section className="grid gap-4 rounded-xl border border-border/80 bg-card p-4 shadow-sm lg:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="evolution-patient">Paciente</Label>
-          <Select
-            value={patientId}
-            items={patientSelectItems}
-            onValueChange={(value) => setPatientId(value as string)}
-          >
-            <SelectTrigger id="evolution-patient" className="h-10 w-full">
-              <SelectValue placeholder="Selecione o paciente" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {clinicalPatients.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {patient.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {activePatients.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border px-3 py-2.5 text-sm text-muted-foreground">
+              Nenhum paciente cadastrado. Cadastre um aprendiz em Aprendizes.
+            </p>
+          ) : (
+            <Select
+              value={patientId}
+              items={patientSelectItems}
+              onValueChange={(value) => setPatientId(value as string)}
+            >
+              <SelectTrigger id="evolution-patient" className="h-10 w-full">
+                <SelectValue placeholder="Selecione o paciente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {activePatients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="space-y-2">

@@ -1,5 +1,6 @@
 "use server";
 
+import { requirePermission } from "@/lib/auth-guard";
 import { mapAgendaEventToDailyAppointment } from "@/lib/agenda-events";
 import type { DailyAppointment } from "@/lib/dashboard-mock-data";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -13,7 +14,7 @@ import {
 } from "@/lib/internal-communication";
 import { validateAgendaAppointmentSlot } from "@/lib/agenda-conflict-server";
 import { resolveQueueNumberForAppointment } from "@/lib/reception-panel-queue";
-import { CLINICAL_ROLES } from "@/lib/rbac";
+import { CLINICAL_ROLES, PERMISSIONS } from "@/lib/rbac";
 
 import type { AppointmentConflictType } from "@/lib/agenda-conflicts";
 
@@ -147,6 +148,8 @@ export async function sendInternalMessageAction(
   receiverId: string,
   content: string
 ): Promise<ActionResult<{ message: InternalMessageRow }>> {
+  await requirePermission(PERMISSIONS.INTERNAL_MESSAGING);
+
   const supabase = await createServerSupabaseClient();
 
   if (!supabase) {

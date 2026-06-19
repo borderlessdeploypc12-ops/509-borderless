@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DocumentTemplatesPage() {
-  await requirePermission(PERMISSIONS.DOCUMENT_TEMPLATES_MANAGE);
+  await requirePermission(PERMISSIONS.DOCUMENT_TEMPLATES_VIEW);
 
   const result = await listDocumentTemplatesAction();
 

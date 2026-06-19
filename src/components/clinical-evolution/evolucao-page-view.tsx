@@ -5,8 +5,13 @@ import { FileText } from "lucide-react";
 import { ClinicalEvolutionForm } from "@/components/clinical-evolution/clinical-evolution-form";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { PageContainer } from "@/components/layout/page-container";
+import type { ClinicalPatient } from "@/lib/clinical-evolution-data";
 
-export function EvolucaoPageView() {
+type EvolucaoPageViewProps = {
+  patients: ClinicalPatient[];
+};
+
+export function EvolucaoPageView({ patients }: EvolucaoPageViewProps) {
   return (
     <PageContainer>
       <DashboardPageHeader
@@ -28,7 +33,7 @@ export function EvolucaoPageView() {
         </div>
       </section>
 
-      <ClinicalEvolutionForm />
+      <ClinicalEvolutionForm patients={patients} />
     </PageContainer>
   );
 }

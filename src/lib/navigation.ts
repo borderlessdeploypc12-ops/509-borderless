@@ -82,7 +82,7 @@ export const mainNavEntries: NavEntry[] = [
         title: "Biblioteca de Modelos",
         href: "/dashboard/modelos",
         icon: FileStack,
-        permission: PERMISSIONS.DOCUMENT_TEMPLATES_MANAGE,
+        permission: PERMISSIONS.DOCUMENT_TEMPLATES_VIEW,
       },
     ],
   },

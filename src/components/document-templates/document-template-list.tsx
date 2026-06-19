@@ -8,6 +8,7 @@ import {
   deleteDocumentTemplateAction,
   toggleDocumentTemplateStatusAction,
 } from "@/app/actions/document-template-actions";
+import { ProtectedComponent } from "@/components/auth/protected-component";
 import { AppSearchField } from "@/components/ui/app-search-field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ import {
   formatDocumentTemplateDate,
   getDocumentTemplateCategoryLabel,
 } from "@/lib/document-template-format";
+import { PERMISSIONS } from "@/lib/rbac";
 import type { DocumentTemplateRow } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
@@ -142,16 +144,18 @@ export function DocumentTemplateList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button
-          size="lg"
-          nativeButton={false}
-          render={<Link href="/dashboard/modelos/novo" />}
-        >
-          <Plus className="size-4" aria-hidden />
-          Novo modelo
-        </Button>
-      </div>
+      <ProtectedComponent permission={PERMISSIONS.DOCUMENT_TEMPLATES_MANAGE}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button
+            size="lg"
+            nativeButton={false}
+            render={<Link href="/dashboard/modelos/novo" />}
+          >
+            <Plus className="size-4" aria-hidden />
+            Novo modelo
+          </Button>
+        </div>
+      </ProtectedComponent>
 
       <section className="app-surface-card p-4">
         <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto]">
@@ -250,41 +254,43 @@ export function DocumentTemplateList({
                     {formatDocumentTemplateDate(template.updated_at)}
                   </TableCell>
                   <TableCell>
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Editar modelo"
-                        nativeButton={false}
-                        render={
-                          <Link
-                            href={`/dashboard/modelos/${template.id}/editar`}
-                          />
-                        }
-                      >
-                        <Pencil className="size-4" aria-hidden />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Alternar status"
-                        onClick={() => void handleToggleStatus(template)}
-                      >
-                        <ToggleLeft className="size-4" aria-hidden />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Excluir modelo"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setDeleteTarget(template)}
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </Button>
-                    </div>
+                    <ProtectedComponent permission={PERMISSIONS.DOCUMENT_TEMPLATES_MANAGE}>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Editar modelo"
+                          nativeButton={false}
+                          render={
+                            <Link
+                              href={`/dashboard/modelos/${template.id}/editar`}
+                            />
+                          }
+                        >
+                          <Pencil className="size-4" aria-hidden />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Alternar status"
+                          onClick={() => void handleToggleStatus(template)}
+                        >
+                          <ToggleLeft className="size-4" aria-hidden />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Excluir modelo"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteTarget(template)}
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                        </Button>
+                      </div>
+                    </ProtectedComponent>
                   </TableCell>
                 </TableRow>
               ))}

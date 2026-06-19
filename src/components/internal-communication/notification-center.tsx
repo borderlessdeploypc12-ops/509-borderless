@@ -47,7 +47,7 @@ function formatRelativeTime(isoDate: string) {
 }
 
 export function NotificationCenter({ inverse = false }: { inverse?: boolean }) {
-  const { canUseInternalMessaging } = useUserRole();
+  const { isReceptionOnly } = useUserRole();
   const {
     notifications,
     unreadCount,
@@ -56,7 +56,7 @@ export function NotificationCenter({ inverse = false }: { inverse?: boolean }) {
   } = useInternalCommunication();
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
 
-  const isReception = canUseInternalMessaging;
+  const isReception = isReceptionOnly;
 
   return (
     <>
