@@ -66,7 +66,6 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   [ROLES.AT2]: [...BASE_THERAPIST_PERMISSIONS],
   [ROLES.AT1]: [
     ...BASE_THERAPIST_PERMISSIONS,
-    PERMISSIONS.REPORTS_VIEW,
     PERMISSIONS.CLINICAL_EVOLUTION_MANAGE,
   ],
   [ROLES.SUPERVISOR]: [
@@ -76,7 +75,6 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     PERMISSIONS.AGENDA_SEARCH,
     PERMISSIONS.PROFESSIONALS_VIEW,
     PERMISSIONS.REPORTS_VIEW,
-    PERMISSIONS.SETTINGS_VIEW,
   ],
   [ROLES.ADMIN]: Object.values(PERMISSIONS),
 };
@@ -110,8 +108,8 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/dashboard/relatorios": PERMISSIONS.REPORTS_VIEW,
   "/dashboard/auditoria": PERMISSIONS.AUDIT_LOGS_VIEW,
   "/chat": PERMISSIONS.INTERNAL_MESSAGING,
-  "/configuracoes": PERMISSIONS.SETTINGS_VIEW,
-  "/dashboard/configuracoes": PERMISSIONS.SETTINGS_VIEW,
+  "/configuracoes": PERMISSIONS.SETTINGS_MANAGE,
+  "/dashboard/configuracoes": PERMISSIONS.SETTINGS_MANAGE,
 };
 
 export const CLINICAL_EVOLUTION_EDITOR_ROLES = [
@@ -119,6 +117,34 @@ export const CLINICAL_EVOLUTION_EDITOR_ROLES = [
   ROLES.SUPERVISOR,
   ROLES.AT1,
 ] as const satisfies readonly Role[];
+
+export const REPORTS_SUPERVISOR_ROLES = [
+  ROLES.ADMIN,
+  ROLES.SUPERVISOR,
+] as const satisfies readonly Role[];
+
+export function canAccessClinicalReports(
+  profile: UserProfile | string,
+  isMaster = false
+) {
+  if (isMaster) {
+    return true;
+  }
+
+  const role = normalizeRole(profile);
+  return (REPORTS_SUPERVISOR_ROLES as readonly Role[]).includes(role);
+}
+
+export function canManageClinicSettings(
+  profile: UserProfile | string,
+  isMaster = false
+) {
+  if (isMaster) {
+    return true;
+  }
+
+  return normalizeRole(profile) === ROLES.ADMIN;
+}
 
 function normalizePathname(pathname: string) {
   if (pathname.length > 1 && pathname.endsWith("/")) {

@@ -104,6 +104,7 @@ export type Database = {
           instrument: string | null;
           evaluation_date: string;
           content_html: string;
+          total_score: number | null;
           status: "draft" | "finalized";
           professional_name: string;
           professional_role: string;
@@ -117,6 +118,7 @@ export type Database = {
           instrument?: string | null;
           evaluation_date: string;
           content_html?: string;
+          total_score?: number | null;
           status?: "draft" | "finalized";
           professional_name: string;
           professional_role: string;
@@ -130,6 +132,7 @@ export type Database = {
           instrument?: string | null;
           evaluation_date?: string;
           content_html?: string;
+          total_score?: number | null;
           status?: "draft" | "finalized";
           professional_name?: string;
           professional_role?: string;
@@ -684,6 +687,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      clinic_settings: {
+        Row: {
+          id: string;
+          nome_clinica: string;
+          cnpj: string | null;
+          endereco_completo: string | null;
+          logo_url: string | null;
+          stripe_api_key: string | null;
+          mercado_pago_api_key: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          nome_clinica?: string;
+          cnpj?: string | null;
+          endereco_completo?: string | null;
+          logo_url?: string | null;
+          stripe_api_key?: string | null;
+          mercado_pago_api_key?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          nome_clinica?: string;
+          cnpj?: string | null;
+          endereco_completo?: string | null;
+          logo_url?: string | null;
+          stripe_api_key?: string | null;
+          mercado_pago_api_key?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -704,6 +743,10 @@ export type Database = {
         Args: {
           p_conversation_id: string;
         };
+        Returns: boolean;
+      };
+      is_admin: {
+        Args: Record<string, never>;
         Returns: boolean;
       };
     };
@@ -762,6 +805,9 @@ export type AssessmentScoreRow =
 
 export type DocumentTemplateRow =
   Database["public"]["Tables"]["document_templates"]["Row"];
+
+export type ClinicSettingsRow =
+  Database["public"]["Tables"]["clinic_settings"]["Row"];
 
 export type ChatConversationRow =
   Database["public"]["Tables"]["chat_conversations"]["Row"];

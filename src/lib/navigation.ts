@@ -144,7 +144,7 @@ export const mainNavEntries: NavEntry[] = [
     title: "Configurações",
     href: "/configuracoes",
     icon: Settings,
-    permission: PERMISSIONS.SETTINGS_VIEW,
+    permission: PERMISSIONS.SETTINGS_MANAGE,
   },
 ];
 

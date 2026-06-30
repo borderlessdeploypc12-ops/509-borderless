@@ -1,30 +1,48 @@
 import type { Metadata } from "next";
 
-import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
-import { PageContainer } from "@/components/layout/page-container";
-import { requirePermission } from "@/lib/auth-guard";
-import { PERMISSIONS } from "@/lib/rbac";
+import { getClinicSettingsAction } from "@/app/actions/clinic-settings-actions";
+import { AccessDeniedCard } from "@/components/auth/access-denied-card";
+import { ClinicSettingsPageView } from "@/components/settings/clinic-settings-page-view";
+import { requireAdmin } from "@/lib/auth-guard";
+import {
+  CLINIC_SETTINGS_ID,
+  type ClinicSettingsPublic,
+} from "@/lib/clinic-settings";
 
 export const metadata: Metadata = {
   title: "Configurações",
-  description: "Preferências da clínica.",
+  description: "Configurações globais da clínica.",
+};
+
+const emptySettings: ClinicSettingsPublic = {
+  id: CLINIC_SETTINGS_ID,
+  nomeClinica: "Nurse Care",
+  cnpj: null,
+  enderecoCompleto: null,
+  logoUrl: null,
+  stripeApiKeyMasked: null,
+  mercadoPagoApiKeyMasked: null,
+  hasStripeApiKey: false,
+  hasMercadoPagoApiKey: false,
 };
 
 export default async function ConfiguracoesPage() {
-  await requirePermission(PERMISSIONS.SETTINGS_VIEW);
+  await requireAdmin();
+
+  const result = await getClinicSettingsAction();
+
+  if (!result.success) {
+    return (
+      <AccessDeniedCard
+        title="Configurações indisponíveis"
+        description={result.error}
+      />
+    );
+  }
 
   return (
-    <PageContainer>
-      <DashboardPageHeader
-        title="Configurações"
-        breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Configurações" },
-        ]}
-      />
-      <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-12 text-center text-sm text-muted-foreground">
-        Preferências da clínica e da equipe em breve.
-      </div>
-    </PageContainer>
+    <ClinicSettingsPageView
+      initialSettings={result.data ?? emptySettings}
+    />
   );
 }
