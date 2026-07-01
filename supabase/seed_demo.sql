@@ -14,6 +14,7 @@
 -- | at1@clinica.demo          | AT1        | Ana Paula Santos (Psicóloga) |
 -- | at2@clinica.demo          | AT2        | Bruno Lima (AT)              |
 -- | recepcao@clinica.demo     | RECEPCAO   | Mariana Costa                |
+-- | familia@clinica.demo      | FAMILIA    | Patrícia Mendes (Lucas)      |
 -- =============================================================================
 
 begin;
@@ -126,6 +127,37 @@ create table if not exists public.clinical_evolution_records (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (patient_id, session_date, professional_name)
+);
+
+-- Portal da Família (20250701120000)
+alter table public.user_profiles
+  add column if not exists patient_id uuid references public.patients (id) on delete set null;
+
+alter table public.user_profiles
+  drop constraint if exists user_profiles_profile_check;
+
+alter table public.user_profiles
+  add constraint user_profiles_profile_check
+  check (profile in ('ADMIN', 'SUPERVISOR', 'RECEPCAO', 'AT1', 'AT2', 'FAMILIA'));
+
+alter table public.user_profiles
+  drop constraint if exists user_profiles_familia_patient_check;
+
+alter table public.user_profiles
+  add constraint user_profiles_familia_patient_check
+  check (
+    (profile = 'FAMILIA' and patient_id is not null)
+    or (profile <> 'FAMILIA' and patient_id is null)
+  );
+
+create table if not exists public.family_portal_notices (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references public.patients (id) on delete cascade,
+  title text not null,
+  content text not null check (char_length(trim(content)) > 0),
+  author_name text not null,
+  is_published boolean not null default true,
+  created_at timestamptz not null default now()
 );
 
 -- agenda_events — base + colunas incrementais
@@ -401,7 +433,8 @@ declare
     {"id":"e1000002-0000-4000-8000-000000000002","email":"supervisor@clinica.demo","name":"Dra. Carla Nogueira","profile":"SUPERVISOR"},
     {"id":"e1000003-0000-4000-8000-000000000003","email":"at1@clinica.demo","name":"Ana Paula Santos","profile":"AT1"},
     {"id":"e1000004-0000-4000-8000-000000000004","email":"at2@clinica.demo","name":"Bruno Lima","profile":"AT2"},
-    {"id":"e1000005-0000-4000-8000-000000000005","email":"recepcao@clinica.demo","name":"Mariana Costa","profile":"RECEPCAO"}
+    {"id":"e1000005-0000-4000-8000-000000000005","email":"recepcao@clinica.demo","name":"Mariana Costa","profile":"RECEPCAO"},
+    {"id":"e1000006-0000-4000-8000-000000000006","email":"familia@clinica.demo","name":"Patrícia Mendes","profile":"FAMILIA","patient_id":"a0000001-0000-4000-8000-000000000001"}
   ]'::jsonb;
   user_row jsonb;
   v_user_id uuid;
@@ -442,7 +475,8 @@ begin
       '{"provider":"email","providers":["email"]}'::jsonb,
       jsonb_build_object(
         'full_name', user_row ->> 'name',
-        'profile', user_row ->> 'profile'
+        'profile', user_row ->> 'profile',
+        'patient_id', user_row ->> 'patient_id'
       ),
       now(),
       now(),
@@ -486,7 +520,7 @@ end $$;
 -- ---------------------------------------------------------------------------
 insert into public.user_profiles (
   id, full_name, profile, is_master,
-  professional_role, professional_council, cpf, status
+  professional_role, professional_council, cpf, status, patient_id
 )
 values
   (
@@ -497,7 +531,8 @@ values
     'Coordenador',
     'CRP 12/34567',
     '12345678901',
-    'active'
+    'active',
+    null
   ),
   (
     'e1000002-0000-4000-8000-000000000002',
@@ -507,7 +542,8 @@ values
     'Psicólogo(a)',
     'CRP 12/98765',
     '23456789012',
-    'active'
+    'active',
+    null
   ),
   (
     'e1000003-0000-4000-8000-000000000003',
@@ -517,7 +553,8 @@ values
     'Psicólogo(a)',
     'CRP 12/11223',
     '34567890123',
-    'active'
+    'active',
+    null
   ),
   (
     'e1000004-0000-4000-8000-000000000004',
@@ -527,7 +564,8 @@ values
     'Assistente Terapêutico (AT)',
     'CRP 12/44556',
     '45678901234',
-    'active'
+    'active',
+    null
   ),
   (
     'e1000005-0000-4000-8000-000000000005',
@@ -537,7 +575,19 @@ values
     null,
     null,
     '56789012345',
-    'active'
+    'active',
+    null
+  ),
+  (
+    'e1000006-0000-4000-8000-000000000006',
+    'Patrícia Mendes',
+    'FAMILIA',
+    false,
+    null,
+    null,
+    null,
+    'active',
+    'a0000001-0000-4000-8000-000000000001'
   )
 on conflict (id) do update set
   full_name = excluded.full_name,
@@ -545,6 +595,7 @@ on conflict (id) do update set
   professional_role = excluded.professional_role,
   professional_council = excluded.professional_council,
   status = excluded.status,
+  patient_id = excluded.patient_id,
   updated_at = now();
 
 -- Presença online
@@ -1178,6 +1229,31 @@ values
   )
 on conflict (id) do nothing;
 
+-- Avisos do portal da família (Lucas Mendes)
+insert into public.family_portal_notices (
+  id, patient_id, title, content, author_name, is_published, created_at
+)
+values
+  (
+    'f3000001-0000-4000-8000-000000000001',
+    'a0000001-0000-4000-8000-000000000001',
+    'Lembrete de materiais',
+    'Por favor, traga na próxima sessão a ficha de reforço que enviamos por e-mail na semana passada.',
+    'Equipe Nurse Care',
+    true,
+    now() - interval '3 days'
+  ),
+  (
+    'f3000002-0000-4000-8000-000000000002',
+    'a0000001-0000-4000-8000-000000000001',
+    'Reunião de feedback',
+    'Agendamos uma conversa com a família na sexta-feira às 17h para alinhar os objetivos do próximo ciclo terapêutico.',
+    'Dra. Carla Nogueira',
+    true,
+    now() - interval '1 day'
+  )
+on conflict (id) do nothing;
+
 commit;
 
 -- =============================================================================
@@ -1199,4 +1275,5 @@ commit;
 -- Chat               → /chat (conversas demo)
 -- Auditoria          → /dashboard/auditoria (login admin)
 -- Configurações      → /configuracoes (login admin)
+-- Portal da Família  → /portal-familia (login familia@clinica.demo — responsável do Lucas)
 -- =============================================================================

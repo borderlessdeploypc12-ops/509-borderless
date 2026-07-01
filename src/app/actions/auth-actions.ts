@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { translateAuthError } from "@/lib/auth-messages";
 import type { UserProfile } from "@/lib/auth";
 import {
+  FAMILIA_HOME_PATH,
+  isFamilyOnlyRole,
   isReceptionOnlyRole,
   isRole,
   normalizeRole,
@@ -95,6 +97,10 @@ export async function signInAction(
 
     if (profile && isReceptionOnlyRole(profile.profile)) {
       redirect(RECEPCAO_HOME_PATH);
+    }
+
+    if (profile && isFamilyOnlyRole(profile.profile)) {
+      redirect(FAMILIA_HOME_PATH);
     }
   }
 

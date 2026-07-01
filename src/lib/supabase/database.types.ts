@@ -13,43 +13,110 @@ export type Database = {
         Row: {
           id: string;
           full_name: string;
-          profile: "ADMIN" | "SUPERVISOR" | "RECEPCAO" | "AT1" | "AT2";
+          profile:
+            | "ADMIN"
+            | "SUPERVISOR"
+            | "RECEPCAO"
+            | "AT1"
+            | "AT2"
+            | "FAMILIA";
           is_master: boolean;
           professional_council: string | null;
           professional_role: string | null;
           birth_date: string | null;
           cpf: string | null;
           status: "active" | "inactive";
+          patient_id: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
           full_name: string;
-          profile: "ADMIN" | "SUPERVISOR" | "RECEPCAO" | "AT1" | "AT2";
+          profile:
+            | "ADMIN"
+            | "SUPERVISOR"
+            | "RECEPCAO"
+            | "AT1"
+            | "AT2"
+            | "FAMILIA";
           is_master?: boolean;
           professional_council?: string | null;
           professional_role?: string | null;
           birth_date?: string | null;
           cpf?: string | null;
           status?: "active" | "inactive";
+          patient_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           full_name?: string;
-          profile?: "ADMIN" | "SUPERVISOR" | "RECEPCAO" | "AT1" | "AT2";
+          profile?:
+            | "ADMIN"
+            | "SUPERVISOR"
+            | "RECEPCAO"
+            | "AT1"
+            | "AT2"
+            | "FAMILIA";
           is_master?: boolean;
           professional_council?: string | null;
           professional_role?: string | null;
           birth_date?: string | null;
           cpf?: string | null;
           status?: "active" | "inactive";
+          patient_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_patient_id_fkey";
+            columns: ["patient_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      family_portal_notices: {
+        Row: {
+          id: string;
+          patient_id: string;
+          title: string;
+          content: string;
+          author_name: string;
+          is_published: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          patient_id: string;
+          title: string;
+          content: string;
+          author_name: string;
+          is_published?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          patient_id?: string;
+          title?: string;
+          content?: string;
+          author_name?: string;
+          is_published?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_portal_notices_patient_id_fkey";
+            columns: ["patient_id"];
+            isOneToOne: false;
+            referencedRelation: "patients";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       patients: {
         Row: {
@@ -758,6 +825,9 @@ export type Database = {
 export type UserProfileRow = Database["public"]["Tables"]["user_profiles"]["Row"];
 
 export type PatientRow = Database["public"]["Tables"]["patients"]["Row"];
+
+export type FamilyPortalNoticeRow =
+  Database["public"]["Tables"]["family_portal_notices"]["Row"];
 
 export type EvaluationRow = Database["public"]["Tables"]["evaluations"]["Row"];
 

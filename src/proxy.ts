@@ -6,6 +6,7 @@ import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 import {
   canAccessRoute,
   getAccessDeniedRedirectPath,
+  FAMILIA_HOME_PATH,
   RECEPCAO_HOME_PATH,
   ROLES,
   normalizeRole,
@@ -19,6 +20,7 @@ const protectedPrefixes = [
   "/paciente",
   "/evolucao",
   "/configuracoes",
+  "/portal-familia",
 ];
 
 export async function proxy(request: NextRequest) {
@@ -75,6 +77,16 @@ export async function proxy(request: NextRequest) {
 
     if (profile) {
       const normalizedProfile = normalizeRole(profile.profile);
+
+      if (
+        normalizedProfile === ROLES.FAMILIA &&
+        !pathname.startsWith("/portal-familia")
+      ) {
+        const portalUrl = request.nextUrl.clone();
+        portalUrl.pathname = FAMILIA_HOME_PATH;
+        portalUrl.search = "";
+        return NextResponse.redirect(portalUrl);
+      }
 
       if (
         normalizedProfile === ROLES.RECEPCAO &&

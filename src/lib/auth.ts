@@ -26,6 +26,11 @@ export const userProfileOptions = [
     label: "Recepção",
     description: "Agendamento e atendimento inicial",
   },
+  {
+    value: ROLES.FAMILIA,
+    label: "Família / Responsável",
+    description: "Acesso somente leitura ao portal da família",
+  },
 ] as const;
 
 export type UserProfile = Role;

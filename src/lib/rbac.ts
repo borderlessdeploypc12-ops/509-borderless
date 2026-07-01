@@ -6,6 +6,7 @@ export const ROLES = {
   RECEPCAO: "RECEPCAO",
   AT1: "AT1",
   AT2: "AT2",
+  FAMILIA: "FAMILIA",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -30,6 +31,7 @@ export const PERMISSIONS = {
   INTERNAL_MESSAGING: "internal_messaging:use",
   FINANCE_MANAGE: "finance:manage",
   TEAM_MANAGE: "team:manage",
+  FAMILY_PORTAL_VIEW: "family_portal:view",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -63,6 +65,7 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     PERMISSIONS.AGENDA_MANAGE,
     PERMISSIONS.INTERNAL_MESSAGING,
   ],
+  [ROLES.FAMILIA]: [PERMISSIONS.FAMILY_PORTAL_VIEW],
   [ROLES.AT2]: [...BASE_THERAPIST_PERMISSIONS],
   [ROLES.AT1]: [
     ...BASE_THERAPIST_PERMISSIONS,
@@ -90,7 +93,11 @@ export const PROFESSIONAL_ROLES = [
 
 export const RECEPCAO_HOME_PATH = "/agenda";
 
+export const FAMILIA_HOME_PATH = "/portal-familia";
+
 export const RECEPCAO_ALLOWED_PATHS = [RECEPCAO_HOME_PATH, "/chat"] as const;
+
+export const FAMILIA_ALLOWED_PATHS = [FAMILIA_HOME_PATH] as const;
 
 export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/agenda": PERMISSIONS.AGENDA_VIEW,
@@ -110,6 +117,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/chat": PERMISSIONS.INTERNAL_MESSAGING,
   "/configuracoes": PERMISSIONS.SETTINGS_MANAGE,
   "/dashboard/configuracoes": PERMISSIONS.SETTINGS_MANAGE,
+  "/portal-familia": PERMISSIONS.FAMILY_PORTAL_VIEW,
 };
 
 export const CLINICAL_EVOLUTION_EDITOR_ROLES = [
@@ -196,7 +204,17 @@ export function isReceptionAllowedPath(pathname: string) {
   return (RECEPCAO_ALLOWED_PATHS as readonly string[]).includes(normalizedPath);
 }
 
+export function isFamilyAllowedPath(pathname: string) {
+  const normalizedPath = normalizePathname(pathname);
+
+  return (FAMILIA_ALLOWED_PATHS as readonly string[]).includes(normalizedPath);
+}
+
 export function getAccessDeniedRedirectPath(profile: UserProfile | string) {
+  if (isFamilyOnlyRole(profile)) {
+    return `${FAMILIA_HOME_PATH}?acesso=negado`;
+  }
+
   return isReceptionOnlyRole(profile)
     ? `${RECEPCAO_HOME_PATH}?acesso=negado`
     : "/dashboard?acesso=negado";
@@ -226,6 +244,14 @@ export function canAccessRoute(
 
   const role = normalizeRole(profile);
 
+  if (role === ROLES.FAMILIA && !isFamilyAllowedPath(pathname)) {
+    return false;
+  }
+
+  if (role !== ROLES.FAMILIA && isFamilyAllowedPath(pathname)) {
+    return false;
+  }
+
   if (role === ROLES.RECEPCAO && !isReceptionAllowedPath(pathname)) {
     return false;
   }
@@ -253,6 +279,10 @@ export function canEditClinicalEvolutionRecords(
 
 export function isReceptionOnlyRole(profile: UserProfile | string) {
   return normalizeRole(profile) === ROLES.RECEPCAO;
+}
+
+export function isFamilyOnlyRole(profile: UserProfile | string) {
+  return normalizeRole(profile) === ROLES.FAMILIA;
 }
 
 export function isClinicalRole(profile: UserProfile | string) {

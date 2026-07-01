@@ -7,6 +7,7 @@ import {
   canManageClinicSettings,
   getAccessDeniedRedirectPath,
   hasPermission,
+  isFamilyOnlyRole,
   type Permission,
 } from "@/lib/rbac";
 
@@ -45,6 +46,20 @@ export async function requireAdmin() {
 
   if (!canManageClinicSettings(session.profile, session.isMaster)) {
     redirect(getAccessDeniedRedirectPath(session.profile));
+  }
+
+  return session;
+}
+
+export async function requireFamilySession() {
+  const session = await requireServerUserSession();
+
+  if (!isFamilyOnlyRole(session.profile)) {
+    redirect("/dashboard?acesso=negado");
+  }
+
+  if (!session.patientId) {
+    redirect("/login?erro=perfil-pendente");
   }
 
   return session;

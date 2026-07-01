@@ -12,6 +12,7 @@ export type AppUserSession = {
   displayRole: string;
   isMaster: boolean;
   professionalCouncil: string | null;
+  patientId: string | null;
 };
 
 export function getInitials(fullName: string) {
@@ -60,5 +61,6 @@ export function mapUserProfileRow(
     displayRole: getDisplayRole(normalizedProfile, profile.is_master),
     isMaster: profile.is_master,
     professionalCouncil: profile.professional_council,
+    patientId: profile.patient_id ?? null,
   };
 }
